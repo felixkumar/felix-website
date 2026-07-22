@@ -1,0 +1,67 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* tt_cod
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 17.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-06-30 22:44+0000\n"
+"PO-Revision-Date: 2025-06-30 22:44+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: tt_cod
+#. odoo-python
+#: code:addons/tt_cod/models/payment_provider.py:0
+#, python-format
+msgid ""
+"\n"
+"            <div>\n"
+"                <h5>Cash on Delivery Instructions</h5>\n"
+"                <p>You will pay when the products are delivered to your address.</p>\n"
+"                <p>Please ensure you have the exact amount ready for our delivery personnel.</p>\n"
+"            </div>\n"
+"        "
+msgstr ""
+
+#. module: tt_cod
+#: model_terms:ir.ui.view,arch_db:tt_cod.payment_provider_form_cod
+msgid "COD Instructions"
+msgstr ""
+
+#. module: tt_cod
+#: model:ir.model.fields.selection,name:tt_cod.selection__payment_provider__custom_mode__cod
+#: model:payment.provider,name:tt_cod.payment_provider_cod
+msgid "Cash on Delivery"
+msgstr ""
+
+#. module: tt_cod
+#: model_terms:payment.provider,pending_msg:tt_cod.payment_provider_cod
+msgid "Cash on Delivery Instructions"
+msgstr ""
+
+#. module: tt_cod
+#: model:ir.model.fields,field_description:tt_cod.field_payment_provider__custom_mode
+msgid "Custom Mode"
+msgstr ""
+
+#. module: tt_cod
+#: model:ir.model,name:tt_cod.model_payment_provider
+msgid "Payment Provider"
+msgstr ""
+
+#. module: tt_cod
+#: model_terms:payment.provider,pending_msg:tt_cod.payment_provider_cod
+msgid ""
+"Please ensure you have the exact amount ready for our delivery personnel."
+msgstr ""
+
+#. module: tt_cod
+#: model_terms:payment.provider,pending_msg:tt_cod.payment_provider_cod
+msgid "You will pay when the products are delivered to your address."
+msgstr ""
