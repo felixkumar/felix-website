@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="product_template_form_view_inherit_discount" model="ir.ui.view">
+        <record name="name">product.template.form.inherit.discount</record>
+        <record name="model">product.template</record>
+        <record name="inherit_id" ref="product.product_template_only_form_view"/>
+        <record name="arch" type="xml">
+            <!-- Injects fields near standard Sales Price field -->
+            <xpath expr="//field[@name='list_price']" position="after">
+                <field name="discount_percentage"/>
+                <field name="discounted_price" widget="monetary" readonly="1"/>
+            </xpath>
+        </record>
+    </record>
+</odoo>
