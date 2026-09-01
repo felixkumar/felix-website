@@ -122,5 +122,13 @@
         </field>
     </record>
 
-    <menuitem id="menu_lb_product_reviews" name="Product Reviews" parent="website.menu_website_configuration" action="action_lb_product_reviews" sequence="70" groups="base.group_user"/>
+<!--    <menuitem id="menu_lb_product_reviews" name="Product Reviews" parent="website.menu_website_configuration" action="action_lb_product_reviews" sequence="70" groups="base.group_user"/>-->
+    <menuitem
+    id="menu_lb_product_reviews"
+    name="Product Reviews"
+    parent="stock.menu_stock_root"
+    action="action_lb_product_reviews"
+    sequence="50"
+    groups="stock.group_stock_user"
+/>
 </odoo>

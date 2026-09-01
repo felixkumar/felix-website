@@ -6,7 +6,7 @@
     'description': '''Adds product reviews and 1-5 star ratings to the Odoo 18 website shop. Includes moderation, verified purchase detection, helpful votes, rating breakdown, and review images.''',
     'author': 'LB Software Technologies',
     'license': 'LGPL-3',
-    'depends': ['website_sale', 'sale_management', 'portal'],
+    'depends': ['website_sale', 'sale_management', 'portal','stock'],
     'data': [
         'security/ir.model.access.csv',
         'views/product_review_views.xml',
