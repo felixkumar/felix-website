@@ -1,0 +1,70 @@
+<odoo>
+    <template id="lb_product_review_product_page" inherit_id="website_sale.product" name="LB Product Reviews on Product Page">
+        <xpath expr="//section[@id='product_detail']" position="after">
+            <section id="lb-product-reviews" class="container mt-5 mb-5 lb-product-reviews" t-att-data-product-id="product.id">
+                <div class="row">
+                    <div class="col-12">
+                        <h3 class="mb-3">Customer Reviews &amp; Ratings</h3>
+                        <div class="lb-review-summary p-4 rounded border mb-4">
+                            <div class="row align-items-center">
+                                <div class="col-md-4 text-center">
+                                    <div class="lb-average-rating" data-lb-average="1">0.0</div>
+                                    <div class="lb-stars" aria-label="Average rating">★★★★★</div>
+                                    <div class="text-muted"><span class="lb-total-reviews">0</span> reviews</div>
+                                </div>
+                                <div class="col-md-8">
+                                    <t t-foreach="[5,4,3,2,1]" t-as="star">
+                                        <div class="d-flex align-items-center mb-1 lb-rating-row">
+                                            <span class="me-2" style="width:50px"><t t-esc="star"/> ★</span>
+                                            <div class="progress flex-grow-1" style="height:8px"><div class="progress-bar lb-rating-bar" t-att-data-rating="star" style="width:0%"></div></div>
+                                            <span class="ms-2 text-muted lb-rating-count" t-att-data-rating="star">0</span>
+                                        </div>
+                                    </t>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="mb-0">Reviews</h4>
+                            <select class="form-select lb-review-sort" style="max-width:180px">
+                                <option value="recent">Most Recent</option>
+                                <option value="helpful">Most Helpful</option>
+                                <option value="highest">Highest Rated</option>
+                                <option value="lowest">Lowest Rated</option>
+                            </select>
+                        </div>
+                        <div class="lb-review-list"></div>
+                        <div class="text-center mt-3"><button type="button" class="btn btn-outline-primary lb-load-more d-none">Load More</button></div>
+
+                        <div class="lb-review-form-wrap mt-5 p-4 rounded border">
+                            <h4>Write a Review</h4>
+                            <t t-if="request.env.user._is_public()">
+                                <p class="text-muted">Please <a t-att-href="'/web/login?redirect=/shop/product/%s#lb-product-reviews' % product.id">log in</a> to write a review.</p>
+                            </t>
+                            <t t-else="">
+                                <form t-att-action="'/lb_product_reviews/submit?product_id=%s' % product.id" method="post" enctype="multipart/form-data">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <div class="mb-3">
+                                        <label class="form-label">Your Rating</label>
+                                        <div class="lb-rating-input" role="radiogroup" aria-label="Choose rating">
+                                            <input id="lb-star-5" type="radio" name="rating" value="5" checked="checked"/><label for="lb-star-5">★</label>
+                                            <input id="lb-star-4" type="radio" name="rating" value="4"/><label for="lb-star-4">★</label>
+                                            <input id="lb-star-3" type="radio" name="rating" value="3"/><label for="lb-star-3">★</label>
+                                            <input id="lb-star-2" type="radio" name="rating" value="2"/><label for="lb-star-2">★</label>
+                                            <input id="lb-star-1" type="radio" name="rating" value="1"/><label for="lb-star-1">★</label>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3"><label class="form-label">Title</label><input class="form-control" name="title" maxlength="200" required="required" placeholder="Summarize your experience"/></div>
+                                    <div class="mb-3"><label class="form-label">Your Review</label><textarea class="form-control" name="review" rows="5" minlength="3" required="required" placeholder="What did you like about this product?"></textarea></div>
+                                    <div class="mb-3"><label class="form-label">Photos (optional)</label><div class="row g-2"><div class="col-md-4"><input class="form-control" type="file" name="image_1" accept="image/*"/></div><div class="col-md-4"><input class="form-control" type="file" name="image_2" accept="image/*"/></div><div class="col-md-4"><input class="form-control" type="file" name="image_3" accept="image/*"/></div></div><small class="text-muted">Upload up to 3 images.</small></div>
+                                    <button type="submit" class="btn btn-primary">Submit Review</button>
+                                    <p class="small text-muted mt-2 mb-0">Your review will appear after moderation.</p>
+                                </form>
+                            </t>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </xpath>
+    </template>
+</odoo>

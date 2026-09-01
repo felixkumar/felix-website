@@ -1,0 +1,17 @@
+.lb-product-reviews {
+    .lb-review-summary { background: #fff; }
+    .lb-average-rating { font-size: 3rem; font-weight: 700; line-height: 1; }
+    .lb-stars, .lb-small-stars { letter-spacing: 2px; }
+    .lb-stars { font-size: 1.5rem; }
+    .lb-small-stars { font-size: 1rem; }
+    .lb-rating-row .progress { background: #eee; }
+    .lb-rating-bar { transition: width .3s ease; }
+    .lb-rating-input { direction: rtl; display: inline-flex; }
+    .lb-rating-input input { position: absolute; opacity: 0; pointer-events: none; }
+    .lb-rating-input label { cursor: pointer; font-size: 2rem; line-height: 1; padding: 0 2px; }
+    .lb-rating-input label:hover,
+    .lb-rating-input label:hover ~ label,
+    .lb-rating-input input:checked ~ label { opacity: 1; }
+    .lb-rating-input label { opacity: .35; }
+    .lb-review-card p { white-space: pre-line; }
+}

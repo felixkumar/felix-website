@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+
+    <record id="product_template_form_view_lb_reviews" model="ir.ui.view">
+    <field name="name">product.template.form.lb.reviews</field>
+    <field name="model">product.template</field>
+    <field name="inherit_id" ref="product.product_template_only_form_view"/>
+    <field name="arch" type="xml">
+
+        <xpath expr="//page[@name='general_information']" position="after">
+
+            <page name="lb_reviews" string="Reviews">
+
+                <group>
+                    <group string="Review Statistics">
+                        <field name="lb_review_count"/>
+                        <field name="lb_rating_avg"/>
+                    </group>
+                </group>
+
+                <field name="lb_review_ids" nolabel="1">
+
+                    <list>
+                        <field name="partner_id"/>
+                        <field name="rating"/>
+                        <field name="state"/>
+                        <field name="verified_purchase"/>
+                        <field name="create_date"/>
+                    </list>
+
+                </field>
+
+            </page>
+
+        </xpath>
+
+    </field>
+</record>
+    <record id="view_lb_product_review_tree" model="ir.ui.view">
+        <field name="name">lb.product.review.tree</field>
+        <field name="model">lb.product.review</field>
+        <field name="arch" type="xml">
+            <list string="Product Reviews" decoration-warning="state == 'pending'" decoration-success="state == 'approved'" decoration-danger="state == 'rejected'">
+                <field name="product_tmpl_id"/>
+                <field name="partner_id"/>
+                <field name="rating" widget="priority"/>
+                <field name="name"/>
+                <field name="verified_purchase"/>
+                <field name="helpful_count"/>
+                <field name="state"/>
+                <field name="create_date"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_lb_product_review_form" model="ir.ui.view">
+        <field name="name">lb.product.review.form</field>
+        <field name="model">lb.product.review</field>
+        <field name="arch" type="xml">
+            <form string="Product Review">
+                <header>
+                    <button name="action_approve" type="object" string="Approve" class="btn-primary" invisible="state == 'approved'"/>
+                    <button name="action_reject" type="object" string="Reject" class="btn-secondary" invisible="state == 'rejected'"/>
+                    <button name="action_pending" type="object" string="Set Pending" class="btn-secondary" invisible="state == 'pending'"/>
+                    <button name="action_toggle_active" type="object" string="Archive/Unarchive" class="btn-secondary"/>
+                    <field name="state" widget="statusbar" statusbar_visible="pending,approved,rejected"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="product_tmpl_id"/>
+                            <field name="partner_id"/>
+                            <field name="rating"/>
+                            <field name="verified_purchase" readonly="1"/>
+                            <field name="helpful_count" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="name"/>
+                            <field name="active"/>
+                            <field name="create_date" readonly="1"/>
+                        </group>
+                    </group>
+                    <separator string="Review"/>
+                    <field name="review" placeholder="Customer review..." nolabel="1"/>
+                    <separator string="Customer Photos"/>
+                    <group col="3">
+                        <field name="image_1" widget="image"/>
+                        <field name="image_2" widget="image"/>
+                        <field name="image_3" widget="image"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_lb_product_reviews" model="ir.actions.act_window">
+        <field name="name">Product Reviews</field>
+        <field name="res_model">lb.product.review</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_state_pending': 1}</field>
+    </record>
+
+    <record id="view_lb_product_review_search" model="ir.ui.view">
+        <field name="name">lb.product.review.search</field>
+        <field name="model">lb.product.review</field>
+        <field name="arch" type="xml">
+            <search string="Reviews">
+                <field name="product_tmpl_id"/>
+                <field name="partner_id"/>
+                <field name="name"/>
+                <field name="rating"/>
+                <filter name="state_pending" string="Pending" domain="[('state','=','pending')]"/>
+                <filter name="state_approved" string="Approved" domain="[('state','=','approved')]"/>
+                <filter name="state_rejected" string="Rejected" domain="[('state','=','rejected')]"/>
+                <filter name="verified" string="Verified Purchase" domain="[('verified_purchase','=',True)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_product" string="Product" context="{'group_by':'product_tmpl_id'}"/>
+                    <filter name="group_rating" string="Rating" context="{'group_by':'rating'}"/>
+                    <filter name="group_state" string="Status" context="{'group_by':'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <menuitem id="menu_lb_product_reviews" name="Product Reviews" parent="website.menu_website_configuration" action="action_lb_product_reviews" sequence="70" groups="base.group_user"/>
+</odoo>
