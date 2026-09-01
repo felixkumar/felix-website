@@ -92,6 +92,20 @@ class ProductTemplate(models.Model):
         digits=(16, 2),
     )
 
+    is_deal_of_the_day = fields.Boolean(
+        string="Deal of the Day",
+        default=False,
+        help="Check this box to feature this product under Deals of the Day."
+    )
+
+    # 2. Delivery Time (Customer Lead Time in Days)
+    # Note: Odoo standard provides 'sale_delay', but you can create a custom field if needed:
+    delivery_time_days = fields.Integer(
+        string="Delivery Time (Days)",
+        default=1,
+        help="Estimated delivery time in days."
+    )
+
     @api.depends(
         'lb_review_ids.state',
         'lb_review_ids.active',
