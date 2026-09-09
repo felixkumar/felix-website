@@ -3,6 +3,69 @@ from odoo.http import request
 from odoo.exceptions import AccessError, ValidationError
 import base64
 
+from odoo import http
+from odoo.http import request
+
+
+class ProductAPI(http.Controller):
+
+    @http.route(
+        "/api/products/top_selling",
+        type="json",
+        auth="user",
+        methods=["POST"],
+        csrf=False,
+    )
+    def get_top_selling_products(self, limit=10, **kwargs):
+        """Fetches top selling storable and consumable products.
+
+        Filters out service items and delivery charges automatically.
+        """
+        # Step 1: Query sale.report (SQL aggregated) to get top product template IDs fast
+        top_sales = request.env["sale.report"].read_group(
+            domain=[
+                ("state", "in", ["sale", "done"]),
+                ("product_tmpl_id.type", "in", ["consu", "product"]),
+            ],
+            fields=["product_tmpl_id", "product_uom_qty:sum"],
+            groupby=["product_tmpl_id"],
+            orderby="product_uom_qty desc",
+            limit=limit,
+        )
+
+        top_template_ids = [
+            item["product_tmpl_id"][0]
+            for item in top_sales
+            if item.get("product_tmpl_id")
+        ]
+
+        if not top_template_ids:
+            return {"status": 200, "count": 0, "products": []}
+
+        # Step 2: Fetch full template details for those specific top IDs
+        products = request.env["product.template"].browse(top_template_ids)
+
+        # Read fields directly
+        products_data = products.read(
+            [
+                "id",
+                "name",
+                "display_name",
+                "list_price",
+                "sales_count",
+                "qty_available",
+                "virtual_available",
+                "categ_id",
+                "uom_id",
+                "image_512",
+            ]
+        )
+
+        return {
+            "status": 200,
+            "count": len(products_data),
+            "products": products_data,
+        }
 
 class LBProductReviews(http.Controller):
 
