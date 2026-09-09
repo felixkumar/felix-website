@@ -6,16 +6,14 @@
     <field name="model">product.template</field>
     <field name="inherit_id" ref="product.product_template_only_form_view"/>
     <field name="arch" type="xml">
-        <xpath expr="//field[@name='is_storable']" position="after">
-                <field name="is_deal_of_the_day"/>
-                <field name="delivery_time_days"/>
-            </xpath>
         <xpath expr="//page[@name='general_information']" position="after">
 
             <page name="lb_reviews" string="Reviews">
 
                 <group>
                     <group string="Review Statistics">
+                        <field name="is_deal_of_the_day"/>
+                        <field name="delivery_time_days"/>
                         <field name="lb_review_count"/>
                         <field name="lb_rating_avg"/>
                     </group>
