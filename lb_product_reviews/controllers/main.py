@@ -12,7 +12,7 @@ class ProductAPI(http.Controller):
     @http.route(
         ["/api/products/top_selling", "/api/products/top_selling/"],
         type="json",
-        auth="user",
+        auth="public",
         methods=["GET", "POST"],
         csrf=False,
     )
