@@ -7,30 +7,44 @@ from odoo import http
 from odoo.http import request
 
 
+import json
+
+
 class ProductAPI(http.Controller):
 
     @http.route(
         ["/api/products/top_selling", "/api/products/top_selling/"],
         type="json",
         auth="public",
-        methods=["GET", "POST"],
+        methods=["GET", "POST", "OPTIONS"],
         csrf=False,
+        cors="*",
     )
     def get_top_selling_products(self, limit=10, **kwargs):
         """Fetches top selling storable and consumable products.
 
-        Filters out service items and delivery charges automatically.
+        Uses .sudo() to bypass access restrictions for public endpoints.
         """
-        # Step 1: Query sale.report (SQL aggregated) to get top product template IDs fast
-        top_sales = request.env["sale.report"].read_group(
-            domain=[
-                ("state", "in", ["sale", "done"]),
-                ("product_tmpl_id.type", "in", ["consu", "product"]),
-            ],
-            fields=["product_tmpl_id", "product_uom_qty:sum"],
-            groupby=["product_tmpl_id"],
-            orderby="product_uom_qty desc",
-            limit=limit,
+        # Parse limit safely if passed as string or inside JSON-RPC params
+        try:
+            limit = int(limit)
+        except (ValueError, TypeError):
+            limit = 10
+
+        # Step 1: Query sale.report with .sudo() to avoid AccessError
+        top_sales = (
+            request.env["sale.report"]
+            .sudo()
+            .read_group(
+                domain=[
+                    ("state", "in", ["sale", "done"]),
+                    ("product_tmpl_id.type", "in", ["consu", "product"]),
+                ],
+                fields=["product_tmpl_id", "product_uom_qty:sum"],
+                groupby=["product_tmpl_id"],
+                orderby="product_uom_qty desc",
+                limit=limit,
+            )
         )
 
         top_template_ids = [
@@ -42,10 +56,11 @@ class ProductAPI(http.Controller):
         if not top_template_ids:
             return {"status": 200, "count": 0, "products": []}
 
-        # Step 2: Fetch full template details for those specific top IDs
-        products = request.env["product.template"].browse(top_template_ids)
+        # Step 2: Fetch full template details using .sudo()
+        products = (
+            request.env["product.template"].sudo().browse(top_template_ids)
+        )
 
-        # Read fields directly
         products_data = products.read(
             [
                 "id",
