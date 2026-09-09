@@ -13,7 +13,7 @@ class ProductAPI(http.Controller):
         "/api/products/top_selling",
         type="json",
         auth="user",
-        methods=["POST"],
+        methods=["POST","OPTIONS"],
         csrf=False,
     )
     def get_top_selling_products(self, limit=10, **kwargs):
