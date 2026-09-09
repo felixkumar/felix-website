@@ -10,10 +10,10 @@ from odoo.http import request
 class ProductAPI(http.Controller):
 
     @http.route(
-        "/api/products/top_selling",
+        ["/api/products/top_selling", "/api/products/top_selling/"],
         type="json",
         auth="user",
-        methods=["POST","OPTIONS"],
+        methods=["GET", "POST"],
         csrf=False,
     )
     def get_top_selling_products(self, limit=10, **kwargs):
