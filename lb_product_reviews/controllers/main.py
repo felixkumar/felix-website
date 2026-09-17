@@ -7,27 +7,34 @@ from odoo import http
 from odoo.http import request
 
 
-import json
+# controllers/main.py
+from odoo import http
+from odoo.http import request
+from odoo.exceptions import AccessError, OperationalError
 
 class MobileAuthController(http.Controller):
 
     @http.route('/web/session/authenticate', type='json', auth="none", csrf=False, cors='*')
     def authenticate(self, db, login, password, base_location=None):
+        # Perform standard Odoo authentication
         request.session.authenticate(db, login, password)
+        
+        # Retrieve standard web session metadata
         session_info = request.env['ir.http'].session_info()
         
-        # Fetch partner_id associated with the authenticated user
+        # Access authenticated user instance
         user = request.env.user
+        
+        # Append mobile-specific keys directly into the result payload
         session_info.update({
             'uid': user.id,
-            'partner_id': user.partner_id.id,
+            'partner_id': user.partner_id.id if user.partner_id else False,
             'username': user.name,
-            'user_email': user.email,
+            'user_email': user.login or user.email,
             'session_id': request.session.sid,
         })
+        
         return session_info
-
-
 class ProductAPI(http.Controller):
 
     @http.route(
