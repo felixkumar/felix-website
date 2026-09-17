@@ -9,6 +9,24 @@ from odoo.http import request
 
 import json
 
+class MobileAuthController(http.Controller):
+
+    @http.route('/web/session/authenticate', type='json', auth="none", csrf=False, cors='*')
+    def authenticate(self, db, login, password, base_location=None):
+        request.session.authenticate(db, login, password)
+        session_info = request.env['ir.http'].session_info()
+        
+        # Fetch partner_id associated with the authenticated user
+        user = request.env.user
+        session_info.update({
+            'uid': user.id,
+            'partner_id': user.partner_id.id,
+            'username': user.name,
+            'user_email': user.email,
+            'session_id': request.session.sid,
+        })
+        return session_info
+
 
 class ProductAPI(http.Controller):
 
