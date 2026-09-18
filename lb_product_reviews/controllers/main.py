@@ -10,6 +10,10 @@ from odoo import http, _
 from odoo.http import request
 
 
+from odoo import http, _
+from odoo.http import request
+
+
 class SaleOrderCouponController(http.Controller):
 
     @http.route(
@@ -23,31 +27,13 @@ class SaleOrderCouponController(http.Controller):
     def apply_coupon(
         self, order_id, coupon_code, discount_amount, product_id=5816
     ):
-        """Applies a discount coupon to an active sale order.
-
-        If a coupon is already applied, it replaces the existing discount line.
-        """
-        # 1. Parameter Validation
+        """Applies a discount coupon to an active sale order."""
         if not order_id or not coupon_code or discount_amount is None:
             return {
                 'status': 'error',
                 'message': _('Missing required parameters.'),
             }
 
-        try:
-            discount_val = float(discount_amount)
-            if discount_val <= 0:
-                return {
-                    'status': 'error',
-                    'message': _('Discount amount must be greater than zero.'),
-                }
-        except (ValueError, TypeError):
-            return {
-                'status': 'error',
-                'message': _('Invalid discount amount.'),
-            }
-
-        # 2. Fetch Sale Order
         order = request.env['sale.order'].sudo().browse(int(order_id)).exists()
         if not order or order.state not in ['draft', 'sent']:
             return {
@@ -55,7 +41,6 @@ class SaleOrderCouponController(http.Controller):
                 'message': _('Valid draft order not found.'),
             }
 
-        # 3. Verify Discount Product Exists
         product = (
             request.env['product.product']
             .sudo()
@@ -68,15 +53,15 @@ class SaleOrderCouponController(http.Controller):
                 'message': _('Discount product configuration missing.'),
             }
 
-        # 4. Remove any existing coupon lines first (prevents stacking multiple coupons)
-        existing_discount_lines = order.order_line.filtered(
-            lambda line: line.product_id.id == product.id
+        # Remove existing discount line if already applied
+        existing_discount = order.order_line.filtered(
+            lambda l: l.product_id.id == product.id
         )
-        if existing_discount_lines:
-            existing_discount_lines.sudo().unlink()
+        if existing_discount:
+            existing_discount.sudo().unlink()
 
-        # 5. Add New Coupon Line
-        discount_price = -abs(discount_val)
+        # Add the new discount line
+        discount_price = -abs(float(discount_amount))
         order.sudo().write({
             'order_line': [(
                 0,
@@ -94,7 +79,6 @@ class SaleOrderCouponController(http.Controller):
             'status': 'success',
             'order_id': order.id,
             'coupon_code': coupon_code,
-            'discount_amount': abs(discount_val),
             'total_amount': order.amount_total,
             'message': _('Coupon applied successfully.'),
         }
@@ -108,15 +92,10 @@ class SaleOrderCouponController(http.Controller):
         csrf=False,
     )
     def remove_coupon(self, order_id, product_id=5816):
-        """Removes an applied coupon from an active sale order by deleting its
-
-        corresponding discount order line.
-        """
-        # 1. Parameter Validation
+        """Removes an applied discount coupon from an active sale order."""
         if not order_id:
             return {'status': 'error', 'message': _('Order ID is required.')}
 
-        # 2. Fetch Sale Order
         order = request.env['sale.order'].sudo().browse(int(order_id)).exists()
         if not order or order.state not in ['draft', 'sent']:
             return {
@@ -124,20 +103,16 @@ class SaleOrderCouponController(http.Controller):
                 'message': _('Valid draft order not found.'),
             }
 
-        # 3. Find Matching Discount Line(s)
-        target_product_id = int(product_id)
+        # Locate and delete matching discount lines
         discount_lines = order.order_line.filtered(
-            lambda line: line.product_id.id == target_product_id
-            or line.price_unit < 0
+            lambda l: l.product_id.id == int(product_id) or l.price_unit < 0
         )
-
         if not discount_lines:
             return {
                 'status': 'error',
-                'message': _('No coupon or discount line found on this order.'),
+                'message': _('No coupon found on this order.'),
             }
 
-        # 4. Safely Unlink/Delete the Order Line(s)
         discount_lines.sudo().unlink()
 
         return {
