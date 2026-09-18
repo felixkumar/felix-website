@@ -8,9 +8,50 @@ from odoo.http import request
 
 
 # controllers/main.py
-from odoo import http
-from odoo.http import request
 from odoo.exceptions import AccessError, OperationalError
+
+
+class SaleOrderAPI(http.Controller):
+
+    @http.route('/api/sale_order/apply_coupon', type='json', auth='public', website=True, methods=['POST'], csrf=False)
+    def apply_coupon(self, order_id, coupon_code, discount_amount, product_id=5816):
+        """
+        Applies a discount coupon as a line item on an active sale order.
+        """
+        if not order_id or not coupon_code or discount_amount is None:
+            return {'status': 'error', 'message': _('Missing required parameters.')}
+
+        # 1. Fetch sale order
+        order = request.env['sale.order'].sudo().browse(int(order_id)).exists()
+        if not order or order.state not in ['draft', 'sent']:
+            return {'status': 'error', 'message': _('Valid draft order not found.')}
+
+        # 2. Verify discount product exists
+        product = request.env['product.product'].sudo().browse(int(product_id)).exists()
+        if not product:
+            return {'status': 'error', 'message': _('Discount product configuration missing.')}
+
+        # 3. Ensure price unit is negative for discounts
+        discount_price = -abs(float(discount_amount))
+
+        # 4. Append discount order line
+        order.sudo().write({
+            'order_line': [
+                (0, 0, {
+                    'product_id': product.id,
+                    'product_uom_qty': 1,
+                    'price_unit': discount_price,
+                    'name': f"Discount - Coupon {coupon_code}",
+                })
+            ]
+        })
+
+        return {
+            'status': 'success',
+            'order_id': order.id,
+            'total_amount': order.amount_total,
+            'message': _('Coupon applied successfully.')
+        }
 
 class MobileAuthController(http.Controller):
 
