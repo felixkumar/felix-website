@@ -4,74 +4,10 @@ from odoo.http import request
 from odoo.exceptions import AccessError, ValidationError
 
 
-class SaleOrderCouponController(http.Controller):
+from odoo import http
+from odoo.http import request
 
-    @http.route(
-        '/api/sale_order/apply_coupon',
-        type='json',
-        auth='public',
-        website=True,
-        methods=['POST'],
-        csrf=False,
-    )
-    def apply_coupon(
-        self, order_id, coupon_code, discount_amount, product_id=5816
-    ):
-        """Applies a discount coupon to an active sale order."""
-        if not order_id or not coupon_code or discount_amount is None:
-            return {
-                'status': 'error',
-                'message': _('Missing required parameters.'),
-            }
-
-        order = request.env['sale.order'].sudo().browse(int(order_id)).exists()
-        if not order or order.state not in ['draft', 'sent']:
-            return {
-                'status': 'error',
-                'message': _('Valid draft order not found.'),
-            }
-
-        product = (
-            request.env['product.product']
-            .sudo()
-            .browse(int(product_id))
-            .exists()
-        )
-        if not product:
-            return {
-                'status': 'error',
-                'message': _('Discount product configuration missing.'),
-            }
-
-        # Remove existing discount line if already applied
-        existing_discount = order.order_line.filtered(
-            lambda l: l.product_id.id == product.id
-        )
-        if existing_discount:
-            existing_discount.sudo().unlink()
-
-        # Add the new discount line
-        discount_price = -abs(float(discount_amount))
-        order.sudo().write({
-            'order_line': [(
-                0,
-                0,
-                {
-                    'product_id': product.id,
-                    'product_uom_qty': 1,
-                    'price_unit': discount_price,
-                    'name': f'Discount - Coupon {coupon_code}',
-                },
-            )]
-        })
-
-        return {
-            'status': 'success',
-            'order_id': order.id,
-            'coupon_code': coupon_code,
-            'total_amount': order.amount_total,
-            'message': _('Coupon applied successfully.'),
-        }
+class SaleCouponAPI(http.Controller):
 
     @http.route(
         '/api/sale_order/remove_coupon',
@@ -81,36 +17,145 @@ class SaleOrderCouponController(http.Controller):
         methods=['POST'],
         csrf=False,
     )
-    def remove_coupon(self, order_id, product_id=5816):
-        """Removes an applied discount coupon from an active sale order."""
-        if not order_id:
-            return {'status': 'error', 'message': _('Order ID is required.')}
+    def remove_coupon(self, order_id=None, product_id=5816, **kwargs):
+        """Removes an applied coupon or discount line from a sale order.
 
-        order = request.env['sale.order'].sudo().browse(int(order_id)).exists()
+        If order_id is not passed, it defaults to the active user's current draft cart.
+        """
+        # 1. Fetch target order by order_id, or default to the user's active cart
+        if order_id:
+            order = (
+                request.env['sale.order']
+                .sudo()
+                .browse(int(order_id))
+                .exists()
+            )
+        else:
+            order = (
+                request.env['sale.order']
+                .sudo()
+                .search([
+                    ('partner_id', '=', request.env.user.partner_id.id),
+                    ('state', 'in', ['draft', 'sent']),
+                ], limit=1)
+            )
+
         if not order or order.state not in ['draft', 'sent']:
             return {
                 'status': 'error',
-                'message': _('Valid draft order not found.'),
+                'message': _('Valid active draft order not found.'),
             }
 
-        # Locate and delete matching discount lines
+        # 2. Locate coupon/discount lines (matching specific product_id OR negative price)
         discount_lines = order.order_line.filtered(
             lambda l: l.product_id.id == int(product_id) or l.price_unit < 0
         )
+
         if not discount_lines:
             return {
                 'status': 'error',
-                'message': _('No coupon found on this order.'),
+                'message': _('No active coupon found on this order.'),
             }
 
-        discount_lines.sudo().unlink()
+        # 3. Unlink coupon lines and update order totals
+        try:
+            discount_lines.sudo().unlink()
 
-        return {
-            'status': 'success',
-            'order_id': order.id,
-            'total_amount': order.amount_total,
-            'message': _('Coupon removed successfully.'),
-        }
+            # Recalculate sales order totals
+            order._amount_all()
+
+            return {
+                'status': 'success',
+                'message': _('Coupon removed successfully.'),
+                'data': {
+                    'order_id': order.id,
+                    'order_name': order.name,
+                    'subtotal': order.amount_untaxed,
+                    'tax': order.amount_tax,
+                    'total_amount': order.amount_total,
+                },
+            }
+
+        except Exception as e:
+            return {
+                'status': 'error',
+                'message': f'Failed to remove coupon: {str(e)}',
+            }
+
+    @http.route('/api/cart/apply_coupon', type='jsonrpc', auth='user', methods=['POST'], csrf=False)
+    def apply_coupon(self, promo_code, **kw):
+        """
+        Validates and applies a coupon/promo code to the current active order.
+        Expects JSON payload: {"promo_code": "DISCOUNT10"}
+        """
+        if not promo_code:
+            return {
+                'status': 'error',
+                'message': 'Coupon code is required.'
+            }
+
+        # 1. Fetch the active draft order for the authenticated user
+        sale_order = request.env['sale.order'].sudo().search([
+            ('partner_id', '=', request.env.user.partner_id.id),
+            ('state', 'in', ['draft', 'sent'])
+        ], order='id desc', limit=1)
+
+        if not sale_order:
+            return {
+                'status': 'error',
+                'message': 'No active shopping cart/order found.'
+            }
+
+        # 2. Search for a valid loyalty card / coupon matching the code
+        coupon = request.env['loyalty.card'].sudo().search([
+            ('code', '=', promo_code.strip()),
+            ('program_id.active', '=', True)
+        ], limit=1)
+
+        if not coupon:
+            return {
+                'status': 'error',
+                'message': 'Invalid coupon code.'
+            }
+
+        # 3. Validate coupon criteria (expiration, usage limits)
+        if coupon.expiration_date and coupon.expiration_date < request.env.cr.now().date():
+            return {
+                'status': 'error',
+                'message': 'This coupon has expired.'
+            }
+
+        # 4. Apply coupon reward to the sales order
+        try:
+            # Odoo 16+ Loyalty Program application hook
+            status = sale_order._try_apply_code(promo_code.strip())
+            
+            if status.get('error'):
+                return {
+                    'status': 'error',
+                    'message': status['error']
+                }
+
+            # Recalculate totals after applying discount
+            sale_order._amount_all()
+
+            return {
+                'status': 'success',
+                'message': 'Coupon applied successfully!',
+                'data': {
+                    'order_id': sale_order.id,
+                    'order_name': sale_order.name,
+                    'subtotal': sale_order.amount_untaxed,
+                    'tax': sale_order.amount_tax,
+                    'total': sale_order.amount_total,
+                }
+            }
+
+        except Exception as e:
+            return {
+                'status': 'error',
+                'message': f'Failed to apply coupon: {str(e)}'
+            }
 
 
 class MobileAuthController(http.Controller):
