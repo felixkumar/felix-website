@@ -219,8 +219,8 @@ class SaleCouponAPI(http.Controller):
                 'status': 'error',
                 'message': f'Failed to remove coupon: {str(e)}',
             }
-
-    @http.route('/api/cart/apply_coupon', type='jsonrpc', auth='user', methods=['POST'], csrf=False)
+            
+    @http.route('/api/cart/apply_coupon', type='json', auth='user', methods=['POST'], csrf=False)
     def apply_coupon(self, promo_code, **kw):
         """
         Validates and applies a coupon/promo code to the current active order.
