@@ -331,27 +331,29 @@ class SaleCouponAPI(http.Controller):
 class MobileAuthController(http.Controller):
 
     @http.route(
-        '/web/session/authenticate',
-        type='json',
-        auth='none',
-        csrf=False,
-        cors='*',
-    )
-    def authenticate(self, db, login, password, base_location=None):
-        """Authenticates a user session and returns mobile session metadata."""
-        request.session.authenticate(db, login, password)
-        session_info = request.env['ir.http'].session_info()
-        user = request.env.user
+    '/web/session/authenticate',
+    type='json',
+    auth='none',
+    csrf=False,
+    cors='*',
+)
+def authenticate(self, db, login, password, base_location=None):
+    """Authenticates a user session and returns mobile session metadata."""
+    # Pass arguments explicitly by name
+    request.session.authenticate(db=db, login=login, password=password)
 
-        session_info.update({
-            'uid': user.id,
-            'partner_id': user.partner_id.id if user.partner_id else False,
-            'username': user.name,
-            'user_email': user.login or user.email,
-            'session_id': request.session.sid,
-        })
+    session_info = request.env['ir.http'].session_info()
+    user = request.env.user
 
-        return session_info
+    session_info.update({
+        'uid': user.id,
+        'partner_id': user.partner_id.id if user.partner_id else False,
+        'username': user.name,
+        'user_email': user.login or user.email,
+        'session_id': request.session.sid,
+    })
+
+    return session_info
 
 
 class ProductAPI(http.Controller):
