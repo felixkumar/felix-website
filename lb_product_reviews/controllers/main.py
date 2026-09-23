@@ -339,8 +339,9 @@ class MobileAuthController(http.Controller):
     )
     def authenticate(self, db, login, password, base_location=None):
         """Authenticates a user session and returns mobile session metadata."""
-        # Use db_name as the keyword or pass positional arguments:
-        request.session.authenticate(db, login, password)
+        # Odoo 17/18 expects a credential dictionary as the 2nd argument
+        credential = {'type': 'password', 'login': login, 'password': password}
+        request.session.authenticate(db, credential)
 
         session_info = request.env['ir.http'].session_info()
         user = request.env.user
