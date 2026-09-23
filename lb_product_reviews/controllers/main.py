@@ -7,6 +7,144 @@ from odoo.exceptions import AccessError, ValidationError
 from odoo import http
 from odoo.http import request
 
+import hmac
+import hashlib
+import logging
+from odoo import http, fields
+
+_logger = logging.getLogger(__name__)
+
+
+class SaleOrderAPIController(http.Controller):
+
+    @http.route('/api/v1/sale/process_razorpay_payment', type='json', auth='user', methods=['POST'], csrf=False)
+    def process_razorpay_payment(
+        self, 
+        order_id, 
+        journal_id, 
+        razorpay_payment_id, 
+        razorpay_order_id=None, 
+        razorpay_signature=None, 
+        razorpay_secret=None, 
+        payment_status='success', 
+        payment_method_line_id=None, 
+        error_message=None,
+        **kwargs
+    ):
+        """
+        Odoo 18 Controller: Verifies Razorpay Signature, creates Invoice, 
+        registers Payment, and auto-reconciles to set state to 'paid'.
+        """
+        # 1. Fetch Sale Order
+        order = request.env['sale.order'].browse(order_id)
+        if not order.exists():
+            return {
+                'status': 'error',
+                'message': f'Sale Order {order_id} not found.'
+            }
+
+        # 2. Check if Payment Failed on Frontend
+        if payment_status.lower() in ('failed', 'failure', 'cancel'):
+            return {
+                'status': 'payment_failed',
+                'order_id': order.id,
+                'order_state': order.state,
+                'payment_state': 'not_paid',
+                'razorpay_payment_id': razorpay_payment_id,
+                'message': error_message or 'Payment failed or was canceled on Razorpay.'
+            }
+
+        # 3. Signature Verification (If Secret, Order ID, and Signature are provided)
+        if razorpay_secret and razorpay_order_id and razorpay_signature:
+            msg = f"{razorpay_order_id}|{razorpay_payment_id}"
+            generated_signature = hmac.new(
+                razorpay_secret.encode('utf-8'),
+                msg.encode('utf-8'),
+                hashlib.sha256
+            ).hexdigest()
+
+            if generated_signature != razorpay_signature:
+                return {
+                    'status': 'error',
+                    'message': 'Razorpay signature verification failed. Invalid payment payload.'
+                }
+
+        # 4. Success Processing Flow
+        try:
+            # Step A: Confirm Sale Order if draft or sent
+            if order.state in ('draft', 'sent'):
+                order.action_confirm()
+
+            # Step B: Ensure quantities delivered so invoice lines are created
+            for line in order.order_line:
+                if line.qty_delivered == 0:
+                    line.write({'qty_delivered': line.product_uom_qty})
+
+            # Step C: Generate Invoice
+            invoices = order._create_invoices()
+            if not invoices:
+                return {
+                    'status': 'error',
+                    'message': 'Failed to generate invoice for the sales order.'
+                }
+
+            # Step D: Post / Validate Invoice
+            invoices.action_post()
+            invoice = invoices[0]
+
+            # Step E: Fetch Journal
+            journal = request.env['account.journal'].browse(journal_id)
+            if not journal.exists():
+                return {
+                    'status': 'error',
+                    'message': f'Journal ID {journal_id} not found.'
+                }
+
+            # Step F: Get Inbound Payment Method Line ID
+            if not payment_method_line_id:
+                payment_method_line_id = journal.inbound_payment_method_line_ids[:1].id
+
+            # Step G: Prepare Odoo 18 Payment Registration Wizard
+            payment_memo = f"Razorpay ID: {razorpay_payment_id}"
+
+            payment_wizard = request.env['account.payment.register'].with_context(
+                active_model='account.move',
+                active_ids=invoices.ids
+            ).create({
+                'journal_id': journal_id,
+                'payment_method_line_id': payment_method_line_id,
+                'amount': invoice.amount_residual,
+                'payment_date': fields.Date.today(),
+                'communication': payment_memo,
+            })
+
+            # Step H: Create Payment & Reconcile automatically
+            payments = payment_wizard._create_payments()
+
+            # Refresh invoice cache to get updated payment state
+            invoice.invalidate_recordset(['payment_state'])
+
+            return {
+                'status': 'success',
+                'order_id': order.id,
+                'order_state': order.state,
+                'invoice_id': invoice.id,
+                'invoice_number': invoice.name,
+                'invoice_state': invoice.state,
+                'payment_state': invoice.payment_state,  # Will return 'paid' or 'in_payment'
+                'razorpay_payment_id': razorpay_payment_id,
+                'razorpay_order_id': razorpay_order_id,
+                'payment_ids': payments.ids,
+                'message': 'Razorpay payment verified and registered. Invoice created and reconciled successfully.'
+            }
+
+        except Exception as e:
+            _logger.error(f"Razorpay processing error: {str(e)}")
+            return {
+                'status': 'error',
+                'message': str(e)
+            }
+
 class SaleCouponAPI(http.Controller):
 
     @http.route(
