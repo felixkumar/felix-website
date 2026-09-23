@@ -339,7 +339,8 @@ class MobileAuthController(http.Controller):
     )
     def authenticate(self, db, login, password, base_location=None):
         """Authenticates a user session and returns mobile session metadata."""
-        request.session.authenticate(db=db, login=login, password=password)
+        # Use db_name as the keyword or pass positional arguments:
+        request.session.authenticate(db, login, password)
 
         session_info = request.env['ir.http'].session_info()
         user = request.env.user
