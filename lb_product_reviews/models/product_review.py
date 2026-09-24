@@ -1,6 +1,28 @@
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError, ValidationError
 
+from odoo import models
+
+
+class SaleOrder(models.AbstractModel):  # Or models.Model
+    _inherit = 'sale.order'
+
+    def action_confirm(self):
+        # 1. Execute standard confirmation logic first
+        res = super(SaleOrder, self).action_confirm()
+
+        for order in self:
+            # 2. Check if order can be invoiced
+            if order.invoice_status == 'to invoice':
+                # 3. Create invoice(s) for the order
+                invoices = order._create_invoices()
+                
+                # 4. Post the generated invoice(s)
+                for invoice in invoices:
+                    invoice.action_post()
+
+        return res
+
 class ProductReview(models.Model):
     _name = 'lb.product.review'
     _description = 'LB Product Review'
