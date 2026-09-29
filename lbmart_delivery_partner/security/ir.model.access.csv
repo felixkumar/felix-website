@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_delivery_partner_shift,delivery.partner.shift,model_delivery_partner_shift,base.group_user,1,1,1,1
+access_delivery_cash_handover,delivery.cash.handover,model_delivery_cash_handover,,1,1,1,1
+access_delivery_cash_handover_line,delivery.cash.handover.line,model_delivery_cash_handover_line,,1,1,1,1

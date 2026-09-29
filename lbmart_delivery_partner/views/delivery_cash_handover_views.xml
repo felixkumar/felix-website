@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Sequence -->
+    <data noupdate="1">
+        <record id="seq_delivery_cash_handover" model="ir.sequence">
+            <field name="name">Delivery Cash Handover Sequence</field>
+            <field name="code">delivery.cash.handover</field>
+            <field name="prefix">CHO/</field>
+            <field name="padding">5</field>
+            <field name="company_id" eval="False"/>
+        </record>
+    </data>
+
+    <!-- List View -->
+    <record id="view_delivery_cash_handover_list" model="ir.ui.view">
+        <field name="name">delivery.cash.handover.list</field>
+        <field name="model">delivery.cash.handover</field>
+        <field name="arch" type="xml">
+            <list string="Cash Handovers">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="user_id"/>
+                <field name="total_amount" sum="Total Handed Over"/>
+                <field name="journal_id"/>
+                <field name="state" widget="badge" decoration-success="state == 'confirmed'" decoration-info="state == 'submitted'" decoration-muted="state == 'draft'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_delivery_cash_handover_form" model="ir.ui.view">
+        <field name="name">delivery.cash.handover.form</field>
+        <field name="model">delivery.cash.handover</field>
+        <field name="arch" type="xml">
+            <form string="Cash Handover">
+                <header>
+                    <button name="action_load_todays_cod" string="Load Today's COD Orders" type="object" invisible="state not in ['draft', 'submitted']" class="btn-secondary" icon="fa-download"/>
+                    <button name="action_submit" string="Submit to Manager" type="object" invisible="state != 'draft'" class="oe_highlight"/>
+                    <button name="action_confirm" string="Confirm &amp; Receive Cash" type="object" invisible="state != 'submitted'" class="oe_highlight" groups="sales_team.group_sale_manager"/>
+                    <button name="action_cancel" string="Cancel" type="object" invisible="state not in ['draft', 'submitted']"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,confirmed"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="user_id"/>
+                            <field name="date"/>
+                        </group>
+                        <group>
+                            <field name="journal_id"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Collected Orders">
+                            <field name="line_ids">
+                                <list editable="bottom">
+                                    <field name="order_id"/>
+                                    <field name="invoice_id"/>
+                                    <field name="amount"/>
+                                    <field name="currency_id" invisible="1"/>
+                                </list>
+                            </field>
+                            <group class="oe_subtotal_footer oe_right">
+                                <field name="total_amount" class="oe_subtotal_footer_separator"/>
+                            </group>
+                        </page>
+                        <page string="Notes">
+                            <field name="note" placeholder="Add any notes regarding cash shortages, denominations, or remarks..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action & Menu -->
+    <record id="action_delivery_cash_handover" model="ir.actions.act_window">
+        <field name="name">Daily Cash Handovers</field>
+        <field name="res_model">delivery.cash.handover</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_delivery_cash_handover"
+              name="Cash Handovers"
+              parent="sale.sale_menu_root"
+              action="action_delivery_cash_handover"
+              sequence="25"/>
+</odoo>

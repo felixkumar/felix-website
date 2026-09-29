@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_picking_form_inherit_delivery_app" model="ir.ui.view">
+        <field name="name">stock.picking.form.inherit.delivery.app</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='origin']" position="after">
+                <field name="delivery_driver_id" options="{'no_create': True}"/>
+                <field name="delivery_app_status" widget="badge"
+                       decoration-info="delivery_app_status == 'accepted'"
+                       decoration-warning="delivery_app_status in ('arrived_store', 'picked_up')"
+                       decoration-success="delivery_app_status == 'delivered'"/>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="Delivery Partner Proof" name="delivery_proof">
+                    <group>
+                        <group string="Receiver Details">
+                            <field name="signed_by"/>
+                            <field name="delivery_latitude"/>
+                            <field name="delivery_longitude"/>
+                            <field name="cancel_reason"/>
+                        </group>
+                        <group string="Customer Signature">
+                            <field name="delivery_signature" widget="image"/>
+                            <field name="delivery_otp"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

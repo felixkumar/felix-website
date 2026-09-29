@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Inherit Res Users Form View -->
+    <record id="view_users_form_delivery_partner" model="ir.ui.view">
+        <field name="name">res.users.form.delivery.partner</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Add Dedicated Notebook Tab for Delivery Partner Information -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Delivery Partner" name="delivery_partner_details">
+                    <group>
+                        <!-- Status Section -->
+                        <group string="Partner Status">
+                            <field name="is_delivery_partner"/>
+                            <field name="is_online" widget="boolean_toggle" invisible="not is_delivery_partner"/>
+                            <field name="current_shift_id" readonly="1" invisible="not is_delivery_partner"/>
+                        </group>
+
+                        <!-- Vehicle & License Info -->
+                        <group string="Vehicle &amp; License Info" invisible="not is_delivery_partner">
+                            <field name="vehicle_type"/>
+                            <field name="vehicle_number" placeholder="e.g. TN 01 AB 1234"/>
+                            <field name="license_number" placeholder="e.g. TN0120220012345"/>
+                        </group>
+                    </group>
+
+                    <!-- KYC Identifiers -->
+                    <group string="KYC Details" invisible="not is_delivery_partner">
+                        <group>
+                            <field name="pan_number" placeholder="e.g. ABCDE1234F"/>
+                        </group>
+                        <group>
+                            <field name="aadhaar_number" placeholder="12-digit Government ID Number"/>
+                        </group>
+                    </group>
+
+                    <!-- KYC Verification Documents -->
+                    <group string="KYC Documents" invisible="not is_delivery_partner">
+                        <group string="Identity Documents">
+                            <field name="pan_image" widget="image" options="{'size': [150, 150]}"/>
+                            <field name="license_image" widget="image" options="{'size': [150, 150]}"/>
+                        </group>
+                        <group string="Address Proof Documents">
+                            <field name="aadhaar_front_image" widget="image" options="{'size': [150, 150]}"/>
+                            <field name="aadhaar_back_image" widget="image" options="{'size': [150, 150]}"/>
+                        </group>
+                    </group>
+
+                    <!-- Embedded Shift History Ledger -->
+                    <group string="Recent Work Shifts" invisible="not is_delivery_partner">
+                        <field name="shift_ids" readonly="1" nolabel="1">
+                            <list default_order="check_in desc" limit="5">
+                                <field name="check_in"/>
+                                <field name="check_out"/>
+                                <field name="duration_hours" sum="Total Hours"/>
+                                <field name="state" widget="badge"
+                                       decoration-success="state == 'open'"
+                                       decoration-muted="state == 'closed'"/>
+                            </list>
+                        </field>
+                    </group>
+                </page>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- Search View Filter for Delivery Partners -->
+    <record id="view_users_search_delivery_partner" model="ir.ui.view">
+        <field name="name">res.users.search.delivery.partner</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <filter string="Delivery Partners" name="filter_delivery_partners" domain="[('is_delivery_partner', '=', True)]"/>
+                <filter string="Online Delivery Partners" name="filter_online_partners" domain="[('is_delivery_partner', '=', True), ('is_online', '=', True)]"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
