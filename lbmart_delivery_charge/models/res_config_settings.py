@@ -37,6 +37,15 @@ class ResConfigSettings(models.TransientModel):
         string='Terms & Conditions',
         sanitize=True,
     )
+    support_email = fields.Char(
+        string='Customer Support Email',
+        config_parameter='lbmart_delivery.support_email',
+    )
+
+    support_phone = fields.Char(
+        string='Customer Support Contact Number',
+        config_parameter='lbmart_delivery.support_phone',
+    )
 
     @api.model
     def get_values(self):
@@ -60,3 +69,5 @@ class ResConfigSettings(models.TransientModel):
             'lbmart_delivery.terms_and_conditions',
             self.terms_and_conditions or '',
         )
+    
+    

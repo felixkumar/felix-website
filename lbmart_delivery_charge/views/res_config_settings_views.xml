@@ -115,6 +115,50 @@
 
     <div class="o_setting_right_pane">
 
+        <div class="o_form_label">
+            24x7 Customer Support
+        </div>
+
+        <div class="text-muted">
+            Contact details displayed to customers in the mobile application.
+        </div>
+
+        <div class="content-group mt16">
+
+            <div class="row">
+                <label for="support_email"
+                       string="Support Email"
+                       class="col-lg-3 o_light_label"/>
+
+                <div class="col-lg-9">
+                    <field name="support_email"
+                           placeholder="support@example.com"/>
+                </div>
+            </div>
+
+            <div class="row mt8">
+                <label for="support_phone"
+                       string="Contact Number"
+                       class="col-lg-3 o_light_label"/>
+
+                <div class="col-lg-9">
+                    <field name="support_phone"
+                           placeholder="+91 XXXXX XXXXX"/>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+                        <div class="col-12 col-lg-12 o_setting_box">
+
+    <div class="o_setting_left_pane">
+    </div>
+
+    <div class="o_setting_right_pane">
+
         <label for="terms_and_conditions"
                string="Terms &amp; Conditions"/>
 
