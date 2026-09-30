@@ -1,4 +1,5 @@
-from odoo import fields, models
+from odoo import api, fields, models
+
 
 class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
@@ -32,3 +33,30 @@ class ResConfigSettings(models.TransientModel):
         config_parameter='lbmart_delivery.free_threshold',
         default=400.0,
     )
+    terms_and_conditions = fields.Html(
+        string='Terms & Conditions',
+        sanitize=True,
+    )
+
+    @api.model
+    def get_values(self):
+        res = super().get_values()
+
+        terms = self.env['ir.config_parameter'].sudo().get_param(
+            'lbmart_delivery.terms_and_conditions',
+            default=''
+        )
+
+        res.update(
+            terms_and_conditions=terms,
+        )
+
+        return res
+
+    def set_values(self):
+        super().set_values()
+
+        self.env['ir.config_parameter'].sudo().set_param(
+            'lbmart_delivery.terms_and_conditions',
+            self.terms_and_conditions or '',
+        )
