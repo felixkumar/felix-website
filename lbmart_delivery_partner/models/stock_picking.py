@@ -48,3 +48,12 @@ class ProductCategory(models.Model):
         max_width=1920,
         max_height=1920
     )
+
+class LoyaltyProgram(models.Model):
+    _inherit = 'loyalty.program'
+
+    image_1920 = fields.Image(
+        string='Program Image',
+        max_width=1920,
+        max_height=1920,
+    )

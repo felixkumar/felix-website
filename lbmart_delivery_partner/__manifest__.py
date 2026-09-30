@@ -4,7 +4,7 @@
     'category': 'Inventory/Delivery',
     'summary': 'Backend module and REST APIs for Delivery Driver App integration.',
     'author': 'Felix Kumar / LB Mart',
-    'depends': ['stock', 'sale_management','base','product'],
+    'depends': ['stock', 'sale_management','base','product','loyalty'],
     'data': [
         'security/ir.model.access.csv',
         'views/res_users_views.xml',
