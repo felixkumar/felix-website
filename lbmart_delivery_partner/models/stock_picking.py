@@ -39,3 +39,12 @@ class StockPicking(models.Model):
             'delivery_app_status': 'accepted'
         })
         return True
+
+class ProductCategory(models.Model):
+    _inherit = 'product.category'
+
+    image_1920 = fields.Image(
+        string='Category Image',
+        max_width=1920,
+        max_height=1920
+    )

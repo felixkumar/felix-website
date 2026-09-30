@@ -30,4 +30,18 @@
             </xpath>
         </field>
     </record>
+    <record id="product_category_form_view_inherit_image" model="ir.ui.view">
+        <field name="name">product.category.form.inherit.image</field>
+        <field name="model">product.category</field>
+        <field name="inherit_id" ref="product.product_category_form_view"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//field[@name='name']" position="before">
+                <field name="image_1920"
+                       widget="image"
+                       class="oe_avatar"/>
+            </xpath>
+
+        </field>
+    </record>
 </odoo>
