@@ -25,6 +25,143 @@ _logger = logging.getLogger(__name__)
 
 class SaleOrderAPIController(http.Controller):
 
+    @http.route('/api/delivery/address/select_and_verify', type='json', auth='public', methods=['POST'], csrf=False)
+    def select_and_verify_address(self, order_id=None, address_id=None, **kw):
+        """
+        Assigns the selected address_id to order.partner_shipping_id and verifies it.
+        """
+        if not order_id or not address_id:
+            return {
+                'status': 'error',
+                'message': 'Both "order_id" and "address_id" are required.'
+            }
+
+        try:
+            order = request.env['sale.order'].sudo().browse(int(order_id))
+            address = request.env['res.partner'].sudo().browse(int(address_id))
+
+            if not order.exists():
+                return {'status': 'error', 'message': f'Sale Order {order_id} not found.'}
+            if not address.exists():
+                return {'status': 'error', 'message': f'Address ID {address_id} not found.'}
+
+            # Update the sale order's delivery address
+            order.sudo().write({'partner_shipping_id': address.id})
+
+            # Verify the updated address
+            missing_fields = []
+            if not address.street:
+                missing_fields.append('street')
+            if not address.city:
+                missing_fields.append('city')
+            if not address.zip:
+                missing_fields.append('zip')
+
+            contact_phone = address.phone or address.mobile or order.partner_id.phone or order.partner_id.mobile
+            if not contact_phone:
+                missing_fields.append('phone')
+
+            if missing_fields:
+                return {
+                    'status': 'invalid',
+                    'is_valid': False,
+                    'message': f'Address updated on order, but missing required fields: {", ".join(missing_fields)}.',
+                    'order_id': order.id,
+                    'order_name': order.name,
+                    'selected_address_id': address.id,
+                    'missing_fields': missing_fields
+                }
+
+            return {
+                'status': 'success',
+                'is_valid': True,
+                'message': f'Delivery address successfully set to "{address.name}" and verified.',
+                'order_id': order.id,
+                'order_name': order.name,
+                'selected_address': {
+                    'address_id': address.id,
+                    'name': address.name,
+                    'street': address.street,
+                    'street2': address.street2 or '',
+                    'city': address.city,
+                    'state': address.state_id.name if address.state_id else '',
+                    'zip': address.zip,
+                    'phone': contact_phone
+                }
+            }
+
+        except Exception as e:
+            _logger.error(f"Error selecting address for order {order_id}: {str(e)}", exc_info=True)
+            return {'status': 'error', 'message': str(e)}
+
+    @http.route('/api/delivery/address/list', type='json', auth='public', methods=['POST'], csrf=False)
+    def get_customer_delivery_addresses(self, order_id=None, **kw):
+        """
+        Returns the list of all delivery addresses (type='delivery' or 'other' or parent)
+        associated with the customer on the given Sale Order.
+        """
+        if not order_id and 'order_id' in kw:
+            order_id = kw.get('order_id')
+
+        if not order_id:
+            return {'status': 'error', 'message': 'Parameter "order_id" is required.'}
+
+        try:
+            order = request.env['sale.order'].sudo().browse(int(order_id))
+            if not order.exists():
+                return {'status': 'error', 'message': f'Sale order ID {order_id} not found.'}
+
+            customer = order.partner_id
+            
+            # Search for child contacts of type 'delivery' or the parent contact itself
+            addresses = request.env['res.partner'].sudo().search([
+                '|',
+                ('id', '=', customer.id),
+                ('parent_id', '=', customer.id),
+                ('type', 'in', ['delivery', 'other', 'contact'])
+            ])
+
+            address_list = []
+            for addr in addresses:
+                # Check for completeness of each address
+                missing = []
+                if not addr.street: missing.append('street')
+                if not addr.city: missing.append('city')
+                if not addr.zip: missing.append('zip')
+                
+                phone = addr.phone or addr.mobile or customer.phone or customer.mobile
+                if not phone: missing.append('phone')
+
+                address_list.append({
+                    'address_id': addr.id,
+                    'name': addr.name,
+                    'type': addr.type,
+                    'is_current_selected': (addr.id == order.partner_shipping_id.id),
+                    'street': addr.street or '',
+                    'street2': addr.street2 or '',
+                    'city': addr.city or '',
+                    'state_id': addr.state_id.id if addr.state_id else False,
+                    'state_name': addr.state_id.name if addr.state_id else '',
+                    'zip': addr.zip or '',
+                    'phone': phone or '',
+                    'is_complete': len(missing) == 0,
+                    'missing_fields': missing
+                })
+
+            return {
+                'status': 'success',
+                'order_id': order.id,
+                'order_name': order.name,
+                'customer_id': customer.id,
+                'customer_name': customer.name,
+                'selected_shipping_id': order.partner_shipping_id.id,
+                'delivery_addresses': address_list
+            }
+
+        except Exception as e:
+            _logger.error(f"Error fetching addresses for order {order_id}: {str(e)}", exc_info=True)
+            return {'status': 'error', 'message': str(e)}
+
     # Change auth='user' to auth='public' or auth='none'
     @http.route('/api/delivery/order/validate_minimum', type='json', auth='public', methods=['POST'], csrf=False)
     def validate_order_minimum(self, order_id=None, **kw):
