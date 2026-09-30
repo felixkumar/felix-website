@@ -25,12 +25,10 @@ _logger = logging.getLogger(__name__)
 
 class SaleOrderAPIController(http.Controller):
 
-    @http.route('/api/delivery/order/validate_minimum', type='json', auth='user', methods=['POST'], csrf=False)
+    # Change auth='user' to auth='public' or auth='none'
+    @http.route('/api/delivery/order/validate_minimum', type='json', auth='public', methods=['POST'], csrf=False)
     def validate_order_minimum(self, order_id=None, **kw):
-        """
-        Validate whether a sale order meets the minimum required total amount (149),
-        EXCLUDING any Delivery Charge / Shipping lines.
-        """
+        """Validate if order total meets 149 minimum value excluding delivery charges."""
         MINIMUM_ORDER_VALUE = 149.0
 
         if not order_id:
@@ -40,65 +38,53 @@ class SaleOrderAPIController(http.Controller):
             }
 
         try:
-            order_id = int(order_id)
-        except (ValueError, TypeError):
-            return {
-                'status': 'error',
-                'message': 'Invalid "order_id". Must be an integer.'
-            }
-
-        try:
-            order = request.env['sale.order'].sudo().browse(order_id)
+            # Use sudo() to allow public access to read the sale order
+            order = request.env['sale.order'].sudo().browse(int(order_id))
 
             if not order.exists():
                 return {
                     'status': 'error',
-                    'message': f'Sale order with ID {order_id} does not exist.'
+                    'message': f'Sale order ID {order_id} not found.'
                 }
 
-            # Calculate total amount EXCLUDING Delivery Charges
-            qualifying_product_total = 0.0
+            qualifying_total = 0.0
 
             for line in order.order_line:
-                # 1. Skip standard delivery lines flag if Odoo delivery module is installed
                 if getattr(line, 'is_delivery', False):
                     continue
 
-                # 2. Skip products named 'Delivery Charge' or similar variants
                 product_name = line.product_id.name or ''
                 if 'delivery charge' in product_name.lower() or 'shipping' in product_name.lower():
                     continue
 
-                # Add qualifying product line subtotal (price untaxed or price total as per business rule)
-                qualifying_product_total += line.price_total
+                qualifying_total += line.price_total
 
-            qualifying_product_total = round(qualifying_product_total, 2)
+            qualifying_total = round(qualifying_total, 2)
 
-            if qualifying_product_total < MINIMUM_ORDER_VALUE:
-                shortfall = round(MINIMUM_ORDER_VALUE - qualifying_product_total, 2)
+            if qualifying_total < MINIMUM_ORDER_VALUE:
+                shortfall = round(MINIMUM_ORDER_VALUE - qualifying_total, 2)
                 return {
                     'status': 'error',
                     'error_code': 'MINIMUM_ORDER_VALUE_NOT_MET',
-                    'message': f'Minimum cart subtotal (excluding delivery charges) is {MINIMUM_ORDER_VALUE}. Add items worth {shortfall} more to proceed.',
-                    'current_qualifying_total': qualifying_product_total,
+                    'message': f'Minimum order value is 149 (excluding delivery charges). Please add items worth {shortfall} more.',
+                    'qualifying_total': qualifying_total,
                     'minimum_required': MINIMUM_ORDER_VALUE,
                     'shortfall': shortfall
                 }
 
             return {
                 'status': 'success',
-                'message': 'Order meets the minimum product value requirement.',
+                'message': 'Order meets minimum value requirement.',
                 'order_id': order.id,
-                'order_name': order.name,
-                'qualifying_total': qualifying_product_total,
+                'qualifying_total': qualifying_total,
                 'amount_total': order.amount_total
             }
 
         except Exception as e:
-            _logger.error(f"Failed to validate sale order minimum value for ID {order_id}: {str(e)}", exc_info=True)
+            _logger.error(f"Validation error for order {order_id}: {str(e)}", exc_info=True)
             return {
                 'status': 'error',
-                'message': f'Validation failed: {str(e)}'
+                'message': f'Validation error: {str(e)}'
             }
 
     @http.route('/api/v1/sale/process_razorpay_payment', type='json', auth='public', methods=['POST'], csrf=False)
