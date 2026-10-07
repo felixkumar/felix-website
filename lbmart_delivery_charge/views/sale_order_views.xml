@@ -7,9 +7,15 @@
         <field name="arch" type="xml">
             <xpath expr="//header" position="inside">
                 <button name="action_add_delivery_charge" string="Add Delivery Charge" type="object" class="btn-primary"/>
+                <button name="action_calculate_distance"
+                        type="object"
+                        string="Calculate Distance"
+                        class="btn-primary"
+                        icon="fa-map-marker"/>
             </xpath>
             <xpath expr="//field[@name='payment_term_id']" position="after">
                 <field name="computed_delivery_charge" readonly="1"/>
+                <field name="delivery_distance_km"/>
             </xpath>
         </field>
     </record>
