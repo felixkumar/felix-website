@@ -38,6 +38,8 @@ class DeliveryPartnerShift(models.Model):
             else:
                 record.duration_hours = 0.0
 
+
+
 class ResUsers(models.Model):
     _inherit = 'res.users'
 

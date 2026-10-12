@@ -1,36 +1,16 @@
 
-import logging
-
 from odoo import http
 from odoo.http import request
 from odoo.addons.web.controllers.session import Session
 
-_logger = logging.getLogger(__name__)
-
 
 class LBMartSession(Session):
 
-    @http.route(
-        '/web/session/authenticate',
-        type='json',
-        auth='none',
-    )
-    def authenticate(
-        self,
-        db,
-        login,
-        password,
-        base_location=None,
-        app_type=None,
-    ):
-        """Authenticate the user and validate the requested mobile app."""
+    @http.route('/web/session/authenticate', type='json', auth='none')
+    def authenticate(self, db, login, password,
+                     base_location=None, app_type=None):
 
-        _logger.warning(
-            "LBMart authentication controller called. app_type=%s",
-            app_type,
-        )
-
-        # Preserve standard Odoo authentication
+        # Execute standard Odoo authentication
         result = super().authenticate(
             db=db,
             login=login,
@@ -38,96 +18,52 @@ class LBMartSession(Session):
             base_location=base_location,
         )
 
-        # Log the authentication result without exposing credentials
-        if not isinstance(result, dict):
-            _logger.warning(
-                "Authentication returned an unexpected response type."
-            )
+        print('STEP 1: Original authentication result:', result)
+        print('STEP 2: app_type received:', app_type)
+
+        # Check authentication result
+        if not isinstance(result, dict) or not result.get('uid'):
+            print('STOP: Authentication failed or UID missing')
             return result
 
-        uid = result.get('uid')
-
-        _logger.warning(
-            "Standard authentication completed. uid=%s",
-            uid,
-        )
-
-        # Stop if authentication did not produce a valid user ID
-        if not uid:
-            _logger.warning(
-                "Authentication failed or UID is missing."
-            )
-            return result
-
-        # Retrieve the authenticated user
-        user = request.env['res.users'].sudo().browse(uid).exists()
-
-        if not user:
-            _logger.warning(
-                "Authenticated user record was not found. uid=%s",
-                uid,
-            )
-            return result
-
+        # Get authenticated user
+        user = request.env['res.users'].sudo().browse(result['uid'])
         partner = user.partner_id
 
-        _logger.warning(
-            "Authenticated user loaded. uid=%s, partner_id=%s",
-            user.id,
-            partner.id,
+        print('STEP 3: User ID:', user.id)
+        print('STEP 4: Partner ID:', partner.id)
+
+        # Check the field on res.users
+        print(
+            'STEP 5: Field exists on res.users:',
+            'is_delivery_partner' in user._fields
         )
 
-        # The field is defined on res.users
         if 'is_delivery_partner' not in user._fields:
-            _logger.error(
-                "Field is_delivery_partner is not loaded on res.users. "
-                "Check the custom field definition and deployed module."
-            )
+            print('STOP: is_delivery_partner is not loaded on res.users')
             return result
 
+        # Read delivery partner status from res.users
         is_delivery_partner = bool(user.is_delivery_partner)
 
-        user_type = (
-            'delivery_partner'
-            if is_delivery_partner
-            else 'client'
-        )
+        print('STEP 6: Is delivery partner:', is_delivery_partner)
+        print('STEP 7: app_type:', app_type)
 
-        _logger.info(
-            "User role identified. uid=%s, user_type=%s, app_type=%s",
-            user.id,
-            user_type,
-            app_type,
-        )
+        # Add custom fields to the standard Odoo response
+        result.update({
+            'is_delivery_partner': is_delivery_partner,
+            'user_type': (
+                'delivery_partner'
+                if is_delivery_partner
+                else 'client'
+            ),
+            'partner_id': partner.id,
+            'partner_name': partner.name,
+        })
 
-        # Validate the requested app type
-        if app_type not in ('client', 'delivery_partner'):
-            _logger.warning(
-                "Missing or invalid app_type. uid=%s, app_type=%s",
-                user.id,
-                app_type,
-            )
-
-            request.session.logout(keep_db=True)
-
-            return {
-                'uid': False,
-                'error': (
-                    'Unable to verify the application type. '
-                    'Please restart the app and try again.'
-                ),
-            }
-
-        # Prevent delivery partners from entering the client app
+        # Prevent delivery partners from logging into the client app
         if app_type == 'client' and is_delivery_partner:
-            _logger.warning(
-                "Login rejected: delivery partner attempted client app. "
-                "uid=%s",
-                user.id,
-            )
-
             request.session.logout(keep_db=True)
-
             return {
                 'uid': False,
                 'error': (
@@ -136,16 +72,9 @@ class LBMartSession(Session):
                 ),
             }
 
-        # Prevent customers from entering the delivery partner app
+        # Prevent customers from logging into the delivery partner app
         if app_type == 'delivery_partner' and not is_delivery_partner:
-            _logger.warning(
-                "Login rejected: customer attempted delivery partner app. "
-                "uid=%s",
-                user.id,
-            )
-
             request.session.logout(keep_db=True)
-
             return {
                 'uid': False,
                 'error': (
@@ -154,20 +83,6 @@ class LBMartSession(Session):
                 ),
             }
 
-        # Append custom fields while preserving the standard response
-        result.update({
-            'is_delivery_partner': is_delivery_partner,
-            'user_type': user_type,
-            'partner_id': partner.id,
-            'partner_name': partner.name,
-        })
-
-        _logger.info(
-            "LBMart authentication completed successfully. "
-            "uid=%s, user_type=%s, app_type=%s",
-            user.id,
-            user_type,
-            app_type,
-        )
-
+        print('STEP 8: Authentication completed successfully')
         return result
+

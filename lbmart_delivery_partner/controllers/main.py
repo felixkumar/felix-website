@@ -5,9 +5,16 @@ import logging
 import random
 import re
 from odoo import http, fields, _
-from odoo.http import request
 from datetime import datetime, timedelta
 from odoo.modules.registry import Registry
+import os
+import logging
+import firebase_admin
+from firebase_admin import credentials, messaging
+from odoo import http
+from odoo.http import request
+
+_logger = logging.getLogger(__name__)
 
 _logger = logging.getLogger(__name__)
 
@@ -1161,7 +1168,7 @@ class DeliveryPartnerAPI(http.Controller):
         except Exception as e:
             return {'status': 'error', 'message': str(e)}
 
-    @http.route('/api/delivery/picking/picked-up', type='json', auth='none', methods=['POST'], csrf=False)
+    @http.route('/api/delivery/picking/picked-up/old', type='json', auth='none', methods=['POST'], csrf=False)
     def api_picked_up(self, picking_id, driver_user_id):
         """Driver confirms package pickup and starts transit, notifying the customer."""
         try:
@@ -2144,3 +2151,151 @@ class DeliveryPartnerAPI(http.Controller):
             'subtype_id': subtype.id if subtype else False,
         })
         return {'status': 'success', 'message': 'Support request sent successfully.'}
+
+
+
+# =========================================================================
+# Dynamic Firebase SDK Initialization
+# =========================================================================
+if not firebase_admin._apps:
+    try:
+        # Dynamically locate the JSON file in custom_addons directory
+        # Assumes this controller lives in: custom_addons/<your_module>/controllers/main.py
+        current_file_dir = os.path.dirname(os.path.abspath(__file__))
+        custom_addons_dir = os.path.abspath(os.path.join(current_file_dir, '..', '..'))
+        json_filename = 'lb-mart-firebase-adminsdk-fbsvc-e287d10011.json'
+        json_path = os.path.join(custom_addons_dir, json_filename)
+
+        # Fallback check if file is placed directly in the module directory
+        if not os.path.exists(json_path):
+            module_dir = os.path.abspath(os.path.join(current_file_dir, '..'))
+            json_path = os.path.join(module_dir, json_filename)
+
+        if os.path.exists(json_path):
+            cred = credentials.Certificate(json_path)
+            firebase_admin.initialize_app(cred)
+            _logger.info(f"Firebase Admin SDK initialized with file: {json_path}")
+        else:
+            _logger.error(f"Firebase credentials JSON file not found at: {json_path}")
+
+    except Exception as e:
+        _logger.error(f"Failed to initialize Firebase Admin SDK: {str(e)}", exc_info=True)
+
+
+def send_google_push_notification(fcm_token, title, body, data=None):
+    """Utility function to send Google FCM Push Notification."""
+    if not fcm_token:
+        return False
+
+    message = messaging.Message(
+        notification=messaging.Notification(
+            title=title,
+            body=body,
+        ),
+        data=data or {},
+        token=fcm_token,
+    )
+
+    try:
+        response = messaging.send(message)
+        _logger.info(f"FCM Push Notification sent successfully: {response}")
+        return True
+    except Exception as e:
+        _logger.error(f"Failed to send FCM Push Notification: {str(e)}", exc_info=True)
+        return False
+
+
+class DeliveryAndClientAPI(http.Controller):
+
+    # =========================================================================
+    # 1. API Endpoint for Mobile App to Register FCM Token
+    # =========================================================================
+    @http.route('/api/mobile/register-fcm-token', type='json', auth='user', methods=['POST'], csrf=False)
+    def register_fcm_token(self, fcm_token):
+        """
+        Called by the client mobile app upon login or token refresh to save
+        the FCM token on the logged-in customer's partner record.
+        """
+        try:
+            if not fcm_token:
+                return {'status': 'error', 'message': 'fcm_token is required.'}
+
+            # Save token directly to current user's partner record
+            partner = request.env.user.partner_id
+            partner.sudo().write({'fcm_token': fcm_token})
+
+            return {
+                'status': 'success',
+                'message': 'FCM Token registered successfully.'
+            }
+        except Exception as e:
+            _logger.error(f"Register FCM Token API Error: {str(e)}", exc_info=True)
+            return {'status': 'error', 'message': str(e)}
+
+    # =========================================================================
+    # 2. Picked-Up API Endpoint (Triggers Push Notification to Customer)
+    # =========================================================================
+    @http.route('/api/delivery/picking/picked-up', type='json', auth='none', methods=['POST'], csrf=False)
+    def api_picked_up(self, picking_id, driver_user_id):
+        """Driver confirms package pickup and triggers FCM notification."""
+        try:
+            # 1. Fetch picking order safely
+            picking = request.env['stock.picking'].sudo().browse(int(picking_id))
+            if not picking.exists():
+                return {'status': 'error', 'message': 'Picking order not found.'}
+
+            # Ensure picking record is a single record (singleton check)
+            picking = picking.ensure_one()
+
+            # 2. Update status
+            picking.write({'delivery_app_status': 'picked_up'})
+
+            # 3. Safely get partner record directly from the picking
+            customer = picking.partner_id
+            if customer and customer.exists():
+                notification_title = "Order Picked Up! 🚚"
+                message_body = (
+                    f"Hello {customer.name}, your order ({picking.name}) from LB Mart has been picked up "
+                    f"by your delivery partner and is now on its way!"
+                )
+
+                # --- FIX: Fetch driver's partner record to set as author_id ---
+                driver_partner_id = None
+                if driver_user_id:
+                    driver_user = request.env['res.users'].sudo().browse(int(driver_user_id))
+                    if driver_user.exists():
+                        driver_partner_id = driver_user.partner_id.id
+
+                # Fallback to Odoo Superuser (OdooBot) if driver partner not found
+                if not driver_partner_id:
+                    driver_partner_id = request.env.ref('base.partner_root').id
+
+                # Post to chatter using explicit author_id (bypasses auth='none' res.users error)
+                picking.sudo().message_post(
+                    body=message_body,
+                    partner_ids=[customer.id],
+                    author_id=driver_partner_id
+                )
+
+                # Send FCM Push Notification
+                fcm_token = getattr(customer, 'fcm_token', None)
+                if fcm_token:
+                    send_google_push_notification(
+                        fcm_token=fcm_token,
+                        title=notification_title,
+                        body=message_body,
+                        data={
+                            'picking_id': str(picking.id),
+                            'picking_name': picking.name,
+                            'type': 'order_picked_up'
+                        }
+                    )
+
+            return {
+                'status': 'success',
+                'message': 'Order marked as picked up (in transit) and customer notified.'
+            }
+
+        except Exception as e:
+            _logger.error(f"Picked Up API Error: {str(e)}", exc_info=True)
+            return {'status': 'error', 'message': str(e)}
