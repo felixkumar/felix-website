@@ -14,167 +14,330 @@
                      string="LB Mart Delivery"
                      data-key="lbmart_delivery">
 
-                    <h2>LB Mart Delivery Charge Rules</h2>
+                    <!-- ======================================= -->
+                    <!-- SUBTOTAL-BASED DELIVERY CHARGES        -->
+                    <!-- ======================================= -->
+
+                    <h2>LB Mart Subtotal Delivery Charge Rules</h2>
 
                     <div class="row mt16 o_settings_container">
 
+                        <!-- Tier 1: Below configured maximum -->
                         <div class="col-12 col-lg-6 o_setting_box">
-
-                            <div class="o_setting_left_pane">
-                            </div>
-
+                            <div class="o_setting_left_pane"/>
                             <div class="o_setting_right_pane">
-
                                 <label for="delivery_tier1_max"
-                                       string="Orders below ₹150"/>
-
+                                       string="Tier 1 Maximum Subtotal"/>
                                 <div class="text-muted">
-                                    Delivery Charge: ₹30
+                                    Default: Orders below ₹150 — delivery charge ₹30.
                                 </div>
-
                                 <div class="content-group mt16">
                                     <div class="row">
                                         <label for="delivery_tier1_max"
+                                               string="Maximum Subtotal (₹)"
                                                class="col-lg-6 o_light_label"/>
                                         <div class="col-lg-6">
                                             <field name="delivery_tier1_max"/>
                                         </div>
                                     </div>
-
                                     <div class="row mt8">
                                         <label for="delivery_tier1_fee"
+                                               string="Delivery Charge (₹)"
                                                class="col-lg-6 o_light_label"/>
                                         <div class="col-lg-6">
                                             <field name="delivery_tier1_fee"/>
                                         </div>
                                     </div>
                                 </div>
-
                             </div>
                         </div>
 
+                        <!-- Tier 2: Middle subtotal range -->
                         <div class="col-12 col-lg-6 o_setting_box">
-
+                            <div class="o_setting_left_pane"/>
                             <div class="o_setting_right_pane">
-
                                 <label for="delivery_tier2_max"
-                                       string="Orders ₹150 to ₹399"/>
-
+                                       string="Tier 2 Maximum Subtotal"/>
                                 <div class="text-muted">
-                                    Delivery Charge: ₹25
+                                    Default: Orders ₹150–₹399 — delivery charge ₹25.
                                 </div>
-
                                 <div class="content-group mt16">
                                     <div class="row">
                                         <label for="delivery_tier2_max"
+                                               string="Maximum Subtotal (₹)"
                                                class="col-lg-6 o_light_label"/>
                                         <div class="col-lg-6">
                                             <field name="delivery_tier2_max"/>
                                         </div>
                                     </div>
-
                                     <div class="row mt8">
                                         <label for="delivery_tier2_fee"
+                                               string="Delivery Charge (₹)"
                                                class="col-lg-6 o_light_label"/>
                                         <div class="col-lg-6">
                                             <field name="delivery_tier2_fee"/>
                                         </div>
                                     </div>
                                 </div>
-
                             </div>
                         </div>
 
+                        <!-- Free Delivery Threshold -->
                         <div class="col-12 col-lg-6 o_setting_box">
-
+                            <div class="o_setting_left_pane"/>
                             <div class="o_setting_right_pane">
-
                                 <label for="delivery_free_threshold"
-                                       string="Free Delivery"/>
-
+                                       string="Free Delivery Threshold"/>
                                 <div class="text-muted">
-                                    Orders ₹400 and above are free.
+                                    Default: Orders ₹400 and above are free.
                                 </div>
-
                                 <div class="content-group mt16">
                                     <div class="row">
                                         <label for="delivery_free_threshold"
+                                               string="Minimum Subtotal (₹)"
                                                class="col-lg-6 o_light_label"/>
                                         <div class="col-lg-6">
                                             <field name="delivery_free_threshold"/>
                                         </div>
                                     </div>
                                 </div>
-
                             </div>
                         </div>
+
+                    </div>
+
+                    <!-- ======================================= -->
+                    <!-- DISTANCE-BASED DELIVERY CHARGES        -->
+                    <!-- ======================================= -->
+
+                    <h2>LB Mart Distance-Based Delivery Charge Rules</h2>
+
+                    <div class="row mt16 o_settings_container">
+
+                        <!-- Enable / Disable Distance-Based Delivery -->
                         <div class="col-12 col-lg-12 o_setting_box">
+                            <div class="o_setting_left_pane">
+                                <field name="delivery_distance_enabled"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label for="delivery_distance_enabled"
+                                       string="Enable Distance-Based Delivery"/>
+                                <div class="text-muted">
+                                    Calculate delivery charges based on the
+                                    distance between the store and the customer.
+                                </div>
+                            </div>
+                        </div>
 
-    <div class="o_setting_left_pane">
-    </div>
+                        <!-- Distance Tier 1: 0–5 km -->
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <span class="o_form_label">Distance Tier 1</span>
+                                <div class="text-muted">
+                                    Default: 0–5 km — ₹30.
+                                </div>
+                                <div class="content-group mt16">
+                                    <div class="row">
+                                        <label for="delivery_dist_tier1_min"
+                                               string="From Distance (km)"
+                                               class="col-lg-6 o_light_label"/>
+                                        <div class="col-lg-6">
+                                            <field name="delivery_dist_tier1_min"/>
+                                        </div>
+                                    </div>
+                                    <div class="row mt8">
+                                        <label for="delivery_dist_tier1_max"
+                                               string="To Distance (km)"
+                                               class="col-lg-6 o_light_label"/>
+                                        <div class="col-lg-6">
+                                            <field name="delivery_dist_tier1_max"/>
+                                        </div>
+                                    </div>
+                                    <div class="row mt8">
+                                        <label for="delivery_dist_tier1_fee"
+                                               string="Delivery Charge (₹)"
+                                               class="col-lg-6 o_light_label"/>
+                                        <div class="col-lg-6">
+                                            <field name="delivery_dist_tier1_fee"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-    <div class="o_setting_right_pane">
+                        <!-- Distance Tier 2: Above 5–15 km -->
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <span class="o_form_label">Distance Tier 2</span>
+                                <div class="text-muted">
+                                    Default: Above 5–15 km — ₹60.
+                                </div>
+                                <div class="content-group mt16">
+                                    <div class="row">
+                                        <label for="delivery_dist_tier2_min"
+                                               string="From Distance (km)"
+                                               class="col-lg-6 o_light_label"/>
+                                        <div class="col-lg-6">
+                                            <field name="delivery_dist_tier2_min"/>
+                                        </div>
+                                    </div>
+                                    <div class="row mt8">
+                                        <label for="delivery_dist_tier2_max"
+                                               string="To Distance (km)"
+                                               class="col-lg-6 o_light_label"/>
+                                        <div class="col-lg-6">
+                                            <field name="delivery_dist_tier2_max"/>
+                                        </div>
+                                    </div>
+                                    <div class="row mt8">
+                                        <label for="delivery_dist_tier2_fee"
+                                               string="Delivery Charge (₹)"
+                                               class="col-lg-6 o_light_label"/>
+                                        <div class="col-lg-6">
+                                            <field name="delivery_dist_tier2_fee"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-        <div class="o_form_label">
-            24x7 Customer Support
-        </div>
+                        <!-- Distance Tier 3: Above 15–25 km -->
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <span class="o_form_label">Distance Tier 3</span>
+                                <div class="text-muted">
+                                    Default: Above 15–25 km — ₹100.
+                                </div>
+                                <div class="content-group mt16">
+                                    <div class="row">
+                                        <label for="delivery_dist_tier3_min"
+                                               string="From Distance (km)"
+                                               class="col-lg-6 o_light_label"/>
+                                        <div class="col-lg-6">
+                                            <field name="delivery_dist_tier3_min"/>
+                                        </div>
+                                    </div>
+                                    <div class="row mt8">
+                                        <label for="delivery_dist_tier3_max"
+                                               string="To Distance (km)"
+                                               class="col-lg-6 o_light_label"/>
+                                        <div class="col-lg-6">
+                                            <field name="delivery_dist_tier3_max"/>
+                                        </div>
+                                    </div>
+                                    <div class="row mt8">
+                                        <label for="delivery_dist_tier3_fee"
+                                               string="Delivery Charge (₹)"
+                                               class="col-lg-6 o_light_label"/>
+                                        <div class="col-lg-6">
+                                            <field name="delivery_dist_tier3_fee"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-        <div class="text-muted">
-            Contact details displayed to customers in the mobile application.
-        </div>
+                        <!-- Distance Tier 4: Above 25 km -->
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <span class="o_form_label">Distance Tier 4</span>
+                                <div class="text-muted">
+                                    Default: Above 25 km — ₹150.
+                                </div>
+                                <div class="content-group mt16">
+                                    <div class="row">
+                                        <label for="delivery_dist_tier4_min"
+                                               string="From Distance (km)"
+                                               class="col-lg-6 o_light_label"/>
+                                        <div class="col-lg-6">
+                                            <field name="delivery_dist_tier4_min"/>
+                                        </div>
+                                    </div>
+                                    <div class="row mt8">
+                                        <label for="delivery_dist_tier4_max"
+                                               string="To Distance (km)"
+                                               class="col-lg-6 o_light_label"/>
+                                        <div class="col-lg-6">
+                                            <field name="delivery_dist_tier4_max"/>
+                                        </div>
+                                    </div>
+                                    <div class="row mt8">
+                                        <label for="delivery_dist_tier4_fee"
+                                               string="Delivery Charge (₹)"
+                                               class="col-lg-6 o_light_label"/>
+                                        <div class="col-lg-6">
+                                            <field name="delivery_dist_tier4_fee"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-        <div class="content-group mt16">
+                    </div>
 
-            <div class="row">
-                <label for="support_email"
-                       string="Support Email"
-                       class="col-lg-3 o_light_label"/>
+                    <!-- ======================================= -->
+                    <!-- CUSTOMER SUPPORT & INFORMATION         -->
+                    <!-- ======================================= -->
 
-                <div class="col-lg-9">
-                    <field name="support_email"
-                           placeholder="support@example.com"/>
-                </div>
-            </div>
+                    <h2>Customer Support &amp; Information</h2>
 
-            <div class="row mt8">
-                <label for="support_phone"
-                       string="Contact Number"
-                       class="col-lg-3 o_light_label"/>
+                    <div class="row mt16 o_settings_container">
 
-                <div class="col-lg-9">
-                    <field name="support_phone"
-                           placeholder="+91 XXXXX XXXXX"/>
-                </div>
-            </div>
-
-        </div>
-
-    </div>
-
-</div>
+                        <!-- Customer Support -->
                         <div class="col-12 col-lg-12 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <div class="o_form_label">
+                                    24x7 Customer Support
+                                </div>
+                                <div class="text-muted">
+                                    Contact details displayed to customers
+                                    in the mobile application.
+                                </div>
+                                <div class="content-group mt16">
+                                    <div class="row">
+                                        <label for="support_email"
+                                               string="Support Email"
+                                               class="col-lg-3 o_light_label"/>
+                                        <div class="col-lg-9">
+                                            <field name="support_email"
+                                                   placeholder="support@example.com"/>
+                                        </div>
+                                    </div>
+                                    <div class="row mt8">
+                                        <label for="support_phone"
+                                               string="Contact Number"
+                                               class="col-lg-3 o_light_label"/>
+                                        <div class="col-lg-9">
+                                            <field name="support_phone"
+                                                   placeholder="+91 XXXXX XXXXX"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-    <div class="o_setting_left_pane">
-    </div>
-
-    <div class="o_setting_right_pane">
-
-        <label for="terms_and_conditions"
-               string="Terms &amp; Conditions"/>
-
-        <div class="text-muted">
-            Enter the terms and conditions displayed to customers.
-        </div>
-
-        <div class="content-group mt16">
-            <field name="terms_and_conditions"
-                   widget="html"
-                   nolabel="1"/>
-        </div>
-
-    </div>
-
-</div>
+                        <!-- Terms & Conditions -->
+                        <div class="col-12 col-lg-12 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <label for="terms_and_conditions"
+                                       string="Terms &amp; Conditions"/>
+                                <div class="text-muted">
+                                    Enter the terms and conditions displayed
+                                    to customers in the mobile application.
+                                </div>
+                                <div class="content-group mt16">
+                                    <field name="terms_and_conditions"
+                                           widget="html"
+                                           nolabel="1"/>
+                                </div>
+                            </div>
+                        </div>
 
                     </div>
 

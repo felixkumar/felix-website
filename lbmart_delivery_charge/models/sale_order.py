@@ -135,24 +135,64 @@ class SaleOrder(models.Model):
 
     def action_add_delivery_charge(self):
         for order in self:
-            delivery_product = self.env.ref('lbmart_delivery_charge.product_delivery_charge', raise_if_not_found=False)
-            if not delivery_product:
-                continue
-            delivery_line = order.order_line.filtered(lambda l: l.product_id == delivery_product)
-            if order.computed_delivery_charge == 0.0:
-                if delivery_line:
-                    delivery_line.unlink()
-                continue
-            if delivery_line:
-                delivery_line.write({'price_unit': order.computed_delivery_charge, 'product_uom_qty': 1.0})
-            else:
-                self.env['sale.order.line'].create({
-                    'order_id': order.id,
-                    'product_id': delivery_product.id,
-                    'name': 'Delivery Charge',
-                    'product_uom_qty': 1.0,
-                    'price_unit': order.computed_delivery_charge,
-                })
+            # 1. Delivery Charge product
+            delivery_product = self.env.ref(
+                'lbmart_delivery_charge.product_delivery_charge',
+                raise_if_not_found=False
+            )
+
+            if delivery_product:
+                delivery_line = order.order_line.filtered(
+                    lambda line: line.product_id == delivery_product
+                )
+
+                if order.computed_delivery_charge == 0.0:
+                    if delivery_line:
+                        delivery_line.unlink()
+                elif delivery_line:
+                    delivery_line.write({
+                        'price_unit': order.computed_delivery_charge,
+                        'product_uom_qty': 1.0,
+                    })
+                else:
+                    self.env['sale.order.line'].create({
+                        'order_id': order.id,
+                        'product_id': delivery_product.id,
+                        'name': 'Delivery Charge',
+                        'product_uom_qty': 1.0,
+                        'price_unit': order.computed_delivery_charge,
+                    })
+
+            # 2. Platform & Packing Fees product
+            # 2. Platform & Packing Fees product - search by name
+            platform_product = self.env['product.product'].search([
+                ('name', '=', 'Platform & Packing Fees')
+            ], limit=1)
+
+            if platform_product:
+                platform_line = order.order_line.filtered(
+                    lambda line: line.product_id == platform_product
+                )
+
+                # Use the configured sales price
+                platform_fee = platform_product.list_price
+
+                if platform_fee == 0.0:
+                    if platform_line:
+                        platform_line.unlink()
+                elif platform_line:
+                    platform_line.write({
+                        'price_unit': platform_fee,
+                        'product_uom_qty': 1.0,
+                    })
+                else:
+                    self.env['sale.order.line'].create({
+                        'order_id': order.id,
+                        'product_id': platform_product.id,
+                        'name': platform_product.name,
+                        'product_uom_qty': 1.0,
+                        'price_unit': platform_fee,
+                    })
 
     def write(self, vals):
         res = super(SaleOrder, self).write(vals)
