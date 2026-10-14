@@ -20,6 +20,7 @@ import hmac
 import logging
 from odoo import http, fields
 from odoo.http import request
+import json
 
 _logger = logging.getLogger(__name__)
 
@@ -223,6 +224,8 @@ class SaleOrderAPIController(http.Controller):
                 'status': 'error',
                 'message': f'Validation error: {str(e)}'
             }
+
+
 
     @http.route('/api/v1/sale/process_razorpay_payment', type='json', auth='public', methods=['POST'], csrf=False)
     def process_razorpay_payment(
@@ -752,3 +755,80 @@ class LBProductReviews(http.Controller):
         if not review or review.state != 'approved' or not review.active:
             return {'error': _('Review not found.')}
         return {'helpful': review.increment_helpful()}
+
+    @http.route(
+        '/api/delivery/update_customer_location',
+        type='http',
+        auth='public',
+        methods=['POST'],
+        csrf=False
+    )
+    def update_customer_location(self, **kwargs):
+        try:
+            data = json.loads(request.httprequest.data or '{}')
+
+            order_id = data.get('order_id')
+            latitude = data.get('customer_latitude')
+            longitude = data.get('customer_longitude')
+
+            if not order_id or latitude is None or longitude is None:
+                return request.make_json_response({
+                    'success': False,
+                    'message': 'order_id, customer_latitude and '
+                               'customer_longitude are required.'
+                }, status=400)
+
+            try:
+                order_id = int(order_id)
+                latitude = float(latitude)
+                longitude = float(longitude)
+            except (ValueError, TypeError):
+                return request.make_json_response({
+                    'success': False,
+                    'message': 'Invalid order ID or GPS coordinates.'
+                }, status=400)
+
+            if not (-90 <= latitude <= 90):
+                return request.make_json_response({
+                    'success': False,
+                    'message': 'Invalid latitude. Must be between -90 and 90.'
+                }, status=400)
+
+            if not (-180 <= longitude <= 180):
+                return request.make_json_response({
+                    'success': False,
+                    'message': 'Invalid longitude. Must be between -180 and 180.'
+                }, status=400)
+
+            # IMPORTANT: Replace public access with your authenticated
+            # customer/session validation before using this in production.
+            order = request.env['sale.order'].sudo().browse(order_id).exists()
+
+            if not order:
+                return request.make_json_response({
+                    'success': False,
+                    'message': 'Sale order not found.'
+                }, status=404)
+
+            order.write({
+                'customer_latitude': latitude,
+                'customer_longitude': longitude,
+            })
+
+            return request.make_json_response({
+                'success': True,
+                'message': 'Customer location updated successfully.',
+                'data': {
+                    'order_id': order.id,
+                    'order_name': order.name,
+                    'customer_latitude': order.customer_latitude,
+                    'customer_longitude': order.customer_longitude,
+                }
+            }, status=200)
+
+        except Exception:
+            _logger.exception('Failed to update customer location')
+            return request.make_json_response({
+                'success': False,
+                'message': 'Unable to update customer location.'
+            }, status=500)
