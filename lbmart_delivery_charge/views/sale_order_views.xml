@@ -16,6 +16,8 @@
             <xpath expr="//field[@name='payment_term_id']" position="after">
                 <field name="computed_delivery_charge" readonly="1"/>
                 <field name="delivery_distance_km"/>
+                <field name="store_latitude"/>
+                <field name="store_longitude"/>
             </xpath>
         </field>
     </record>

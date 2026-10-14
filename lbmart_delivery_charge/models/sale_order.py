@@ -21,6 +21,9 @@ class SaleOrder(models.Model):
         copy=False
     )
 
+    store_latitude = fields.Float(string="Store Latitude", digits=(10, 7))
+    store_longitude = fields.Float(string="Store Longitude", digits=(10, 7))
+
     def action_calculate_distance(self):
         """Button action to fetch driving distance via Google Distance Matrix API."""
         api_key = self.env['ir.config_parameter'].sudo().get_param('base_geolocalize.google_map_api_key')
@@ -135,6 +138,12 @@ class SaleOrder(models.Model):
 
     def action_add_delivery_charge(self):
         for order in self:
+            company_partner = order.company_id.partner_id
+            if company_partner:
+                order.write({
+                    'store_latitude': company_partner.partner_latitude,
+                    'store_longitude': company_partner.partner_longitude,
+                })
             # 1. Delivery Charge product
             delivery_product = self.env.ref(
                 'lbmart_delivery_charge.product_delivery_charge',
