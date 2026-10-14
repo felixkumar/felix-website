@@ -832,3 +832,54 @@ class LBProductReviews(http.Controller):
                 'success': False,
                 'message': 'Unable to update customer location.'
             }, status=500)
+
+    @http.route(
+        '/api/delivery/store_location',
+        type='http',
+        auth='public',
+        methods=['POST'],
+        csrf=False
+    )
+    def get_store_location(self, **kwargs):
+        try:
+            data = json.loads(request.httprequest.data or '{}')
+            order_id = data.get('order_id')
+
+            if not order_id:
+                return request.make_json_response({
+                    'success': False,
+                    'message': 'order_id is required.'
+                }, status=400)
+
+            try:
+                order_id = int(order_id)
+            except (ValueError, TypeError):
+                return request.make_json_response({
+                    'success': False,
+                    'message': 'Invalid order_id.'
+                }, status=400)
+
+            order = request.env['sale.order'].sudo().browse(order_id).exists()
+
+            if not order:
+                return request.make_json_response({
+                    'success': False,
+                    'message': 'Sale order not found.'
+                }, status=404)
+
+            return request.make_json_response({
+                'success': True,
+                'message': 'Store location fetched successfully.',
+                'data': {
+                    'order_id': order.id,
+                    'order_name': order.name,
+                    'store_latitude': order.store_latitude,
+                    'store_longitude': order.store_longitude,
+                }
+            }, status=200)
+
+        except Exception:
+            return request.make_json_response({
+                'success': False,
+                'message': 'Unable to fetch store location.'
+            }, status=500)
