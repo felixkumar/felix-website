@@ -1000,90 +1000,89 @@ class DeliveryPartnerAPI(http.Controller):
     # ==========================================
     # 3. ORDERS DISCOVERY & CATEGORIZED LISTS
     # ==========================================
-
     @http.route(
-    '/api/delivery/pickings/unassigned',
-    type='json',
-    auth='none',
-    methods=['POST'],
-    csrf=False
-)
-def api_get_unassigned_pickings(self):
-    """Fetch unassigned delivery orders with customer and store coordinates."""
-    try:
-        domain = [
-            ('delivery_app_status', '=', 'unassigned'),
-            ('state', 'not in', ['done', 'cancel'])
-        ]
+        '/api/delivery/pickings/unassigned',
+        type='json',
+        auth='none',
+        methods=['POST'],
+        csrf=False
+    )
+    def api_get_unassigned_pickings(self):
+        """Fetch unassigned delivery orders with customer and store coordinates."""
+        try:
+            domain = [
+                ('delivery_app_status', '=', 'unassigned'),
+                ('state', 'not in', ['done', 'cancel'])
+            ]
 
-        pickings = request.env['stock.picking'].sudo().search(domain)
+            pickings = request.env['stock.picking'].sudo().search(domain)
 
-        picking_list = []
+            picking_list = []
 
-        for p in pickings:
-            # Find the related sale order using the picking origin
-            sale_order = request.env['sale.order'].sudo().search([
-                ('name', '=', p.origin)
-            ], limit=1) if p.origin else request.env['sale.order']
+            for p in pickings:
+                # Find the related sale order using the picking origin
+                sale_order = request.env['sale.order'].sudo().search([
+                    ('name', '=', p.origin)
+                ], limit=1) if p.origin else request.env['sale.order']
 
-            move_lines = [{
-                'product_name': line.product_id.name,
-                'product_uic_qty': line.product_uom_qty,
-                'uom': line.product_uom.name if line.product_uom else ''
-            } for line in p.move_ids_without_package]
+                move_lines = [{
+                    'product_name': line.product_id.name,
+                    'product_uic_qty': line.product_uom_qty,
+                    'uom': line.product_uom.name if line.product_uom else ''
+                } for line in p.move_ids_without_package]
 
-            picking_list.append({
-                'picking_id': p.id,
-                'name': p.name,
-                'origin': p.origin or '',
-                'customer_name': p.partner_id.name if p.partner_id else '',
-                'customer_phone': (
-                    p.partner_id.phone or p.partner_id.mobile or ''
-                ),
-                'delivery_address': ', '.join(filter(None, [
-                    p.partner_id.street or '',
-                    p.partner_id.city or '',
-                    p.partner_id.zip or ''
-                ])) if p.partner_id else '',
-                'scheduled_date': (
-                    str(p.scheduled_date) if p.scheduled_date else ''
-                ),
+                picking_list.append({
+                    'picking_id': p.id,
+                    'name': p.name,
+                    'origin': p.origin or '',
+                    'customer_name': p.partner_id.name if p.partner_id else '',
+                    'customer_phone': (
+                            p.partner_id.phone or p.partner_id.mobile or ''
+                    ),
+                    'delivery_address': ', '.join(filter(None, [
+                        p.partner_id.street or '',
+                        p.partner_id.city or '',
+                        p.partner_id.zip or ''
+                    ])) if p.partner_id else '',
+                    'scheduled_date': (
+                        str(p.scheduled_date) if p.scheduled_date else ''
+                    ),
 
-                # Customer coordinates from sale.order
-                'customer_latitude': (
-                    sale_order.customer_latitude if sale_order else 0.0
-                ),
-                'customer_longitude': (
-                    sale_order.customer_longitude if sale_order else 0.0
-                ),
+                    # Customer coordinates from sale.order
+                    'customer_latitude': (
+                        sale_order.customer_latitude if sale_order else 0.0
+                    ),
+                    'customer_longitude': (
+                        sale_order.customer_longitude if sale_order else 0.0
+                    ),
 
-                # Store coordinates from sale.order
-                'store_latitude': (
-                    sale_order.store_latitude if sale_order else 0.0
-                ),
-                'store_longitude': (
-                    sale_order.store_longitude if sale_order else 0.0
-                ),
+                    # Store coordinates from sale.order
+                    'store_latitude': (
+                        sale_order.store_latitude if sale_order else 0.0
+                    ),
+                    'store_longitude': (
+                        sale_order.store_longitude if sale_order else 0.0
+                    ),
 
-                'items': move_lines
-            })
+                    'items': move_lines
+                })
 
-        return {
-            'status': 'success',
-            'count': len(picking_list),
-            'pickings': picking_list
-        }
+            return {
+                'status': 'success',
+                'count': len(picking_list),
+                'pickings': picking_list
+            }
 
-    except Exception as e:
-        _logger.error(
-            'Fetch Unassigned Pickings Error: %s',
-            str(e),
-            exc_info=True
-        )
-        return {
-            'status': 'error',
-            'message': 'Failed to fetch unassigned pickings.'
-        }
+        except Exception as e:
+            _logger.error(
+                'Fetch Unassigned Pickings Error: %s',
+                str(e),
+                exc_info=True
+            )
+            return {
+                'status': 'error',
+                'message': 'Failed to fetch unassigned pickings.'
+            }
 
     @http.route('/api/delivery/picking/accept', type='json', auth='none', methods=['POST'], csrf=False)
     def api_accept_picking(self, picking_id, driver_user_id):
