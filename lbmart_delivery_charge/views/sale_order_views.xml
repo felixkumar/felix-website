@@ -18,6 +18,8 @@
                 <field name="delivery_distance_km"/>
                 <field name="store_latitude"/>
                 <field name="store_longitude"/>
+                <field name="customer_latitude"/>
+                <field name="customer_longitude"/>
             </xpath>
         </field>
     </record>

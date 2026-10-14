@@ -23,6 +23,8 @@ class SaleOrder(models.Model):
 
     store_latitude = fields.Float(string="Store Latitude", digits=(10, 7))
     store_longitude = fields.Float(string="Store Longitude", digits=(10, 7))
+    customer_latitude = fields.Float(string="Customer Latitude", digits=(10, 7))
+    customer_longitude = fields.Float(string="Customer Longitude", digits=(10, 7))
 
     def action_calculate_distance(self):
         """Button action to fetch driving distance via Google Distance Matrix API."""
