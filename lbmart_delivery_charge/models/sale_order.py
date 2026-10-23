@@ -54,9 +54,12 @@ class SaleOrder(models.Model):
         is_cod = getattr(self, 'is_cod', False)
         payment_mode = "Cash on Delivery" if is_cod else "Paid Online"
         
-        # Robust address fallback (prevents short single-digit strings like "6" from causing Meta Error 100)
+        # Robust address fallback (handles single-digit/numeric street values like "6")
         raw_street = str(customer.street or "").strip()
-        delivery_address = raw_street if len(raw_street) > 3 else "Main Road, Denkanikottai"
+        if not raw_street or len(raw_street) <= 3 or raw_street.isdigit():
+            delivery_address = "Main Road, Denkanikottai, Tamil Nadu"
+        else:
+            delivery_address = f"{raw_street}, Denkanikottai"
 
         whatsapp_config = self.env['whatsapp.config'].get_active_config()
         if not whatsapp_config:
