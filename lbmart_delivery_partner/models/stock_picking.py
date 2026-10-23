@@ -34,7 +34,6 @@ class StockPicking(models.Model):
     delivery_longitude = fields.Float(string="Delivery Longitude", digits=(10, 7))
 
     def send_customer_whatsapp_notification(self, template_name="lbmart_partner_accepted"):
-        # 1. Grab metadata in the main thread
         picking_name = self.name or "Delivery Order"
         db_name = self.env.cr.dbname
 
@@ -44,12 +43,10 @@ class StockPicking(models.Model):
             _logger.warning(f"WhatsApp Notification Skipped: No phone number for picking {picking_name}")
             return False
 
-        # Clean phone number (Digits only)
         cleaned_phone = "".join(filter(str.isdigit, str(raw_phone)))
         if len(cleaned_phone) == 10:
             cleaned_phone = f"91{cleaned_phone}"
 
-        # Extract clean string values (ensuring no None or empty types)
         customer_name = str(customer.name or "Customer").strip()
         order_ref = str(self.sale_id.name if self.sale_id else picking_name).strip()
 
@@ -62,7 +59,6 @@ class StockPicking(models.Model):
         payment_mode = "Cash on Delivery" if is_cod else "Paid Online"
         delivery_address = str(customer.street or "Denkanikottai").strip()
 
-        # Fetch active Meta WhatsApp configuration
         whatsapp_config = self.env['whatsapp.config'].get_active_config()
         if not whatsapp_config:
             _logger.warning("WhatsApp Notification Skipped: No active 'whatsapp.config' record found.")
@@ -72,7 +68,11 @@ class StockPicking(models.Model):
         access_token = whatsapp_config['access_token']
         api_version = whatsapp_config.get('api_version', 'v25.0')
 
-        # Build clean parameters list
+        # Determine exact language code matching Meta Dashboard
+        # 'lbmart_order_confirmed' is en_US, all others are 'en'
+        lang_code = "en_US" if template_name == "lbmart_order_confirmed" else "en"
+
+        # Match exact variable parameters for templates
         if template_name == "lbmart_partner_accepted":
             raw_vals = [customer_name, driver_name, driver_phone, order_ref]
         elif template_name == "lbmart_partner_reached_store":
@@ -87,10 +87,8 @@ class StockPicking(models.Model):
         else:
             raw_vals = [customer_name, order_ref, driver_name]
 
-        # Format parameters with explicit string text
         parameters = [{"type": "text", "text": str(val or "N/A")} for val in raw_vals]
 
-        # 2. Define the background worker function
         def _async_send():
             from odoo import api, SUPERUSER_ID
             from odoo.modules.registry import Registry
@@ -111,7 +109,7 @@ class StockPicking(models.Model):
                     "type": "template",
                     "template": {
                         "name": template_name,
-                        "language": {"code": "en_US"},
+                        "language": {"code": lang_code},
                         "components": [
                             {
                                 "type": "body",
@@ -129,10 +127,10 @@ class StockPicking(models.Model):
                         )
                     else:
                         _logger.error(f"WhatsApp API Error [{response.status_code}]: {response.text}")
+                        _logger.error(f"Failed Payload: {payload}")
                 except Exception as e:
                     _logger.error(f"Failed to execute background Meta WhatsApp API call: {str(e)}")
 
-        # 3. Start the background thread
         thread = threading.Thread(target=_async_send)
         thread.daemon = True
         thread.start()
