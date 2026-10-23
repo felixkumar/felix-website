@@ -1000,6 +1000,52 @@ class DeliveryPartnerAPI(http.Controller):
     # ==========================================
     # 3. ORDERS DISCOVERY & CATEGORIZED LISTS
     # ==========================================
+
+    # @http.route('/api/delivery/pickings/unassigned', type='json', auth='none', methods=['POST'], csrf=False)
+    # def api_get_unassigned_pickings(self):
+    #     """
+    #     Fetch all unassigned delivery orders available for drivers to view and accept.
+    #     """
+    #     try:
+    #         # Search for pickings that are unassigned and not yet completed/cancelled
+    #         domain = [
+    #             ('delivery_app_status', '=', 'unassigned'),
+    #             ('state', 'not in', ['done', 'cancel'])
+    #         ]
+    #
+    #         pickings = request.env['stock.picking'].sudo().search(domain)
+    #
+    #         picking_list = []
+    #         for p in pickings:
+    #             # Extract basic order lines/products info if needed
+    #             move_lines = [{
+    #                 'product_name': line.product_id.name,
+    #                 'product_uic_qty': line.product_uom_qty,
+    #                 'uom': line.product_uom.name if line.product_uom else ''
+    #             } for line in p.move_ids_without_package]
+    #
+    #             picking_list.append({
+    #                 'picking_id': p.id,
+    #                 'name': p.name,
+    #                 'origin': p.origin or '',
+    #                 'customer_name': p.partner_id.name if p.partner_id else '',
+    #                 'customer_phone': p.partner_id.phone or p.partner_id.mobile or '',
+    #                 'delivery_address': f"{p.partner_id.street or ''}, {p.partner_id.city or ''}, {p.partner_id.zip or ''}".strip(
+    #                     ', '),
+    #                 'scheduled_date': str(p.scheduled_date) if p.scheduled_date else '',
+    #                 'items': move_lines
+    #             })
+    #
+    #         return {
+    #             'status': 'success',
+    #             'count': len(picking_list),
+    #             'pickings': picking_list
+    #         }
+    #
+    #     except Exception as e:
+    #         _logger.error(f"Fetch Unassigned Pickings Error: {str(e)}", exc_info=True)
+    #         return {'status': 'error', 'message': f'Failed to fetch pickings: {str(e)}'}
+
     @http.route(
         '/api/delivery/pickings/unassigned',
         type='json',
@@ -1084,42 +1130,63 @@ class DeliveryPartnerAPI(http.Controller):
                 'message': 'Failed to fetch unassigned pickings.'
             }
 
+    @http.route('/api/whatsapp/webhook', type='http', auth='none', methods=['GET', 'POST'], csrf=False)
+    def whatsapp_webhook_handler(self, **kwargs):
+        # 1. Handle Meta Webhook Verification (GET request)
+        if request.httprequest.method == 'GET':
+            mode = kwargs.get('hub.mode')
+            token = kwargs.get('hub.verify_token')
+            challenge = kwargs.get('hub.challenge')
+
+            # Match this token with what you entered in the Meta Dashboard
+            VERIFY_TOKEN = "lbfreshbasket_secure_token_2026"
+
+            if mode and token:
+                if mode == 'subscribe' and token == VERIFY_TOKEN:
+                    _logger.info("WhatsApp Webhook verified successfully!")
+                    return request.make_response(challenge, headers=[('Content-Type', 'text/plain')])
+                else:
+                    return request.make_response('Verification failed: Token mismatch', status=403)
+            return request.make_response('Invalid verification request', status=400)
+
+        # 2. Handle Incoming Messages/Events (POST request)
+        elif request.httprequest.method == 'POST':
+            data = request.jsonrequest
+            _logger.info(f"Received WhatsApp Webhook Data: {data}")
+            return {'status': 'success'}
+
     @http.route('/api/delivery/picking/accept', type='json', auth='none', methods=['POST'], csrf=False)
     def api_accept_picking(self, picking_id, driver_user_id):
-        """
-        Driver accepts an unassigned delivery order.
-        Assigns the driver, moves status from 'unassigned' to 'accepted',
-        and returns the associated sale order details.
-        """
         try:
-            # 1. Validate inputs
             if not picking_id or not driver_user_id:
                 return {'status': 'error', 'message': 'Picking ID and Driver User ID are required.'}
 
-            # 2. Fetch picking order
             picking = request.env['stock.picking'].sudo().browse(int(picking_id))
             if not picking.exists():
                 return {'status': 'error', 'message': 'Delivery picking order not found.'}
 
-            # 3. Check if order is still unassigned
             if picking.delivery_app_status != 'unassigned':
                 return {
                     'status': 'error',
                     'message': 'This order has already been accepted by another driver or is no longer available.'
                 }
 
-            # 4. Verify driver user exists and is a valid delivery partner
             driver_user = request.env['res.users'].sudo().browse(int(driver_user_id))
             if not driver_user.exists() or not driver_user.is_delivery_partner:
                 return {'status': 'error', 'message': 'Invalid delivery driver user account.'}
 
-            # 5. Assign driver and update status
+            # Assign driver and update status immediately
             picking.write({
                 'delivery_driver_id': driver_user.id,
                 'delivery_app_status': 'accepted'
             })
 
-            # 6. Extract Sale Order information safely
+            # Trigger non-blocking async WhatsApp alert
+            try:
+                picking.send_customer_whatsapp_notification()
+            except Exception as whatsapp_err:
+                _logger.error(f"Failed to trigger customer WhatsApp notification: {str(whatsapp_err)}")
+
             sale_order = getattr(picking, 'sale_id', False)
             sale_order_id = sale_order.id if sale_order else None
             sale_order_name = sale_order.name if sale_order else picking.origin
