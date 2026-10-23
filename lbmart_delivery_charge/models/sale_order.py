@@ -231,7 +231,7 @@ class SaleOrder(models.Model):
 
     def send_order_confirmation_whatsapp(self):
         self.ensure_one()
-        picking_name = self.name
+        picking_name = self.name or "SO"
         db_name = self.env.cr.dbname
 
         customer = self.partner_id
@@ -245,12 +245,13 @@ class SaleOrder(models.Model):
         if len(cleaned_phone) == 10:
             cleaned_phone = f"91{cleaned_phone}"
 
+        # Strictly sanitize all variables as clean non-empty strings
         customer_name = str(customer.name or "Customer").strip()
-        order_ref = str(self.name).strip()
-        amount_total = f"₹{self.amount_total:.2f}"
+        order_ref = str(self.name or "Order").strip()
+        amount_total = f"₹{self.amount_total:.2f}" if self.amount_total else "₹0.00"
 
         is_cod = getattr(self, 'is_cod', False)
-        payment_mode = "Cash on Delivery" if is_cod else "Paid Online (Razorpay)"
+        payment_mode = "Cash on Delivery" if is_cod else "Paid Online"
         delivery_address = str(customer.street or "Denkanikottai").strip()
 
         whatsapp_config = self.env['whatsapp.config'].get_active_config()
@@ -307,6 +308,7 @@ class SaleOrder(models.Model):
                             f"Order Confirmation WhatsApp sent successfully to {cleaned_phone} for order {order_ref}")
                     else:
                         _logger.error(f"WhatsApp API Error [{response.status_code}]: {response.text}")
+                        _logger.error(f"Failed Payload: {payload}")
                 except Exception as e:
                     _logger.error(f"Failed to execute background WhatsApp API call: {str(e)}")
 
