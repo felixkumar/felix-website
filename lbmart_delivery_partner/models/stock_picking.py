@@ -111,7 +111,7 @@ class StockPicking(models.Model):
                     "type": "template",
                     "template": {
                         "name": template_name,
-                        "language": {"code": "en"},
+                        "language": {"code": "en_US"},
                         "components": [
                             {
                                 "type": "body",
