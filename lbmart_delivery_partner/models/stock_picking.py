@@ -34,7 +34,7 @@ class StockPicking(models.Model):
     delivery_latitude = fields.Float(string="Delivery Latitude", digits=(10, 7))
     delivery_longitude = fields.Float(string="Delivery Longitude", digits=(10, 7))
 
-    def send_customer_whatsapp_notification(self, template_name="jaspers_market_order_confirmation_v1"):
+    def send_customer_whatsapp_notification(self, template_name="lbmart_partner_accepted"):
         # 1. Grab metadata in the main thread
         picking_id = self.id
         picking_name = self.name
