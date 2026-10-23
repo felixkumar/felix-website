@@ -30,79 +30,92 @@ class SaleOrder(models.Model):
     customer_latitude = fields.Float(string="Customer Latitude", digits=(10, 7))
     customer_longitude = fields.Float(string="Customer Longitude", digits=(10, 7))
 
-    def action_calculate_distance(self):
-        """Button action to fetch driving distance via Google Distance Matrix API."""
-        api_key = self.env['ir.config_parameter'].sudo().get_param('base_geolocalize.google_map_api_key')
+    def send_order_confirmation_whatsapp(self):
+        self.ensure_one()
+        picking_name = self.name or "SO"
+        db_name = self.env.cr.dbname
 
-        if not api_key:
-            api_key = "AIzaSyCDt1wcypqjCsDLhTQWnJN2xpPHE4cXxHY"
+        customer = self.partner_id
+        raw_phone = customer.mobile or customer.phone if customer else False
+        if not raw_phone:
+            _logger.warning(f"WhatsApp Confirmation Skipped: No phone number for sale order {picking_name}")
+            return False
 
-        if not api_key:
-            raise UserError(_("Please configure a valid Google Maps API Key in Settings."))
+        # Clean phone number (Digits only, add 91 country code if 10 digits)
+        cleaned_phone = "".join(filter(str.isdigit, str(raw_phone)))
+        if len(cleaned_phone) == 10:
+            cleaned_phone = f"91{cleaned_phone}"
 
-        for order in self:
-            shop_partner = order.warehouse_id.partner_id
-            customer_partner = order.partner_shipping_id
+        # Strictly sanitize all variables as clean non-empty strings
+        customer_name = str(customer.name or "Customer").strip()
+        order_ref = str(self.name or "Order").strip()
+        amount_total = f"₹{self.amount_total:.2f}" if self.amount_total else "₹0.00"
+        
+        is_cod = getattr(self, 'is_cod', False)
+        payment_mode = "Cash on Delivery" if is_cod else "Paid Online"
+        delivery_address = str(customer.street or "Denkanikottai").strip()
 
-            if not shop_partner or not customer_partner:
-                raise UserError(_("Ensure both Warehouse and Delivery Address are selected."))
+        whatsapp_config = self.env['whatsapp.config'].get_active_config()
+        if not whatsapp_config:
+            _logger.warning("WhatsApp Notification Skipped: No active 'whatsapp.config' record found.")
+            return False
 
-            # Safe address extraction avoiding AttributeError on Many2one fields
-            def _format_address(partner):
-                parts = [
-                    partner.street,
-                    partner.street2,
-                    partner.city,
-                    partner.state_id.name if partner.state_id else False,
-                    partner.zip,
-                    partner.country_id.name if partner.country_id else False
-                ]
-                # Filter out None/False/empty strings and join with commas
-                return ", ".join([p for p in parts if p])
+        phone_number_id = whatsapp_config['phone_number_id']
+        access_token = whatsapp_config['access_token']
+        api_version = whatsapp_config.get('api_version', 'v25.0')
 
-            origin = _format_address(shop_partner)
-            destination = _format_address(customer_partner)
+        # Exactly 5 parameters matching lbmart_order_confirmed body variables (en_US)
+        parameters = [
+            {"type": "text", "text": customer_name},
+            {"type": "text", "text": order_ref},
+            {"type": "text", "text": amount_total},
+            {"type": "text", "text": payment_mode},
+            {"type": "text", "text": delivery_address}
+        ]
 
-            if not origin or not destination:
-                raise UserError(_("Warehouse or Delivery Address lacks sufficient street/city details."))
+        def _async_send():
+            from odoo.modules.registry import Registry
 
-            url = "https://maps.googleapis.com/maps/api/distancematrix/json"
-            params = {
-                'origins': origin,
-                'destinations': destination,
-                'key': api_key,
-                'units': 'metric'
-            }
+            registry = Registry(db_name)
+            with registry.cursor() as cr:
+                env = api.Environment(cr, SUPERUSER_ID, {})
+                url = f"https://graph.facebook.com/{api_version}/{phone_number_id}/messages"
+                headers = {
+                    "Authorization": f"Bearer {access_token}",
+                    "Content-Type": "application/json"
+                }
 
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
-            }
+                payload = {
+                    "messaging_product": "whatsapp",
+                    "recipient_type": "individual",
+                    "to": cleaned_phone,
+                    "type": "template",
+                    "template": {
+                        "name": "lbmart_order_confirmed",
+                        "language": {"code": "en_US"},
+                        "components": [
+                            {
+                                "type": "body",
+                                "parameters": parameters
+                            }
+                        ]
+                    }
+                }
 
-            try:
-                response = requests.get(url, params=params, headers=headers, timeout=10)
-                response.raise_for_status()
-                data = response.json()
-
-                if data.get('status') == 'OK':
-                    element = data['rows'][0]['elements'][0]
-                    element_status = element.get('status')
-
-                    if element_status == 'OK':
-                        distance_meters = element['distance']['value']
-                        order.delivery_distance_km = round(distance_meters / 1000.0, 2)
-                    elif element_status == 'NOT_FOUND':
-                        raise UserError(_("Could not geocode one or both addresses. Check street/zip info."))
-                    elif element_status == 'ZERO_RESULTS':
-                        raise UserError(_("No route found between the warehouse and customer address."))
+                try:
+                    response = requests.post(url, headers=headers, json=payload, timeout=20)
+                    if response.status_code in [200, 201]:
+                        _logger.info(f"Order Confirmation WhatsApp sent successfully to {cleaned_phone} for order {order_ref}")
                     else:
-                        raise UserError(_("Distance calculation failed: %s") % element_status)
-                else:
-                    error_msg = data.get('error_message', data.get('status'))
-                    raise UserError(_("Google API Error: %s") % error_msg)
+                        _logger.error(f"WhatsApp API Error [{response.status_code}]: {response.text}")
+                        _logger.error(f"Failed Payload: {payload}")
+                except Exception as e:
+                    _logger.error(f"Failed to execute background WhatsApp API call: {str(e)}")
 
-            except requests.exceptions.RequestException as e:
-                _logger.error("Failed to connect to Google Distance Matrix API: %s", str(e))
-                raise UserError(_("Could not connect to Google Distance Matrix API."))
+        thread = threading.Thread(target=_async_send)
+        thread.daemon = True
+        thread.start()
+        return True
 
 
     @api.depends('order_line.price_subtotal', 'delivery_distance_km')
