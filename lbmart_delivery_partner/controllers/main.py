@@ -1130,30 +1130,22 @@ class DeliveryPartnerAPI(http.Controller):
                 'message': 'Failed to fetch unassigned pickings.'
             }
 
-    @http.route('/api/whatsapp/webhook', type='http', auth='none', methods=['GET', 'POST'], csrf=False)
-    def whatsapp_webhook_handler(self, **kwargs):
-        # 1. Handle Meta Webhook Verification (GET request)
-        if request.httprequest.method == 'GET':
-            mode = kwargs.get('hub.mode')
-            token = kwargs.get('hub.verify_token')
-            challenge = kwargs.get('hub.challenge')
+    @http.route('/api/whatsapp/webhook', type='json', auth='none', methods=['POST'], csrf=False)
+    def whatsapp_webhook_handler(self, **kw):
+        try:
+            # Compatible with Odoo 17/18 JSON request parsing
+            try:
+                data = request.dispatcher.jsonrequest
+            except AttributeError:
+                import json
+                data = json.loads(request.httprequest.data.decode('utf-8')) if request.httprequest.data else {}
 
-            # Match this token with what you entered in the Meta Dashboard
-            VERIFY_TOKEN = "lbfreshbasket_secure_token_2026"
-
-            if mode and token:
-                if mode == 'subscribe' and token == VERIFY_TOKEN:
-                    _logger.info("WhatsApp Webhook verified successfully!")
-                    return request.make_response(challenge, headers=[('Content-Type', 'text/plain')])
-                else:
-                    return request.make_response('Verification failed: Token mismatch', status=403)
-            return request.make_response('Invalid verification request', status=400)
-
-        # 2. Handle Incoming Messages/Events (POST request)
-        elif request.httprequest.method == 'POST':
-            data = request.jsonrequest
+            # Your webhook processing logic here...
             _logger.info(f"Received WhatsApp Webhook Data: {data}")
             return {'status': 'success'}
+        except Exception as e:
+            _logger.error(f"WhatsApp Webhook Error: {str(e)}", exc_info=True)
+            return {'status': 'error', 'message': str(e)}
 
     @http.route('/api/delivery/picking/accept', type='json', auth='none', methods=['POST'], csrf=False)
     def api_accept_picking(self, picking_id, driver_user_id):
