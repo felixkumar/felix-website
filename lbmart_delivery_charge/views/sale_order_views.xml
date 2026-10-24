@@ -12,6 +12,11 @@
                         string="Calculate Distance"
                         class="btn-primary"
                         icon="fa-map-marker"/>
+                <button name="send_order_confirmation_whatsapp"
+                        type="object"
+                        string="Send Message"
+                        class="btn-primary"
+                        icon="fa-map-marker"/>
             </xpath>
             <xpath expr="//field[@name='payment_term_id']" position="after">
                 <field name="computed_delivery_charge" readonly="1"/>
@@ -23,4 +28,18 @@
             </xpath>
         </field>
     </record>
+
+<!--    <record id="view_partner_base_vat_form_long_lat" model="ir.ui.view">-->
+<!--            <field name="model">res.partner</field>-->
+<!--            <field name="name">view.partner.base</field>-->
+<!--            <field name="priority">15</field>-->
+<!--            <field name="inherit_id" ref="base.view_partner_form" />-->
+<!--            <field name="arch" type="xml">-->
+<!--                <xpath expr="//field[@name='category_id']" position="after">-->
+<!--                    <field name="latitude"/>-->
+<!--                    <field name="longitude"/>-->
+<!--                </xpath>-->
+
+<!--            </field>-->
+<!--        </record>-->
 </odoo>

@@ -4,7 +4,7 @@
     'category': 'Sales',
     'summary': 'Configurable subtotal-based delivery charges for Sale Orders',
     'author': 'LB Mart',
-    'depends': ['sale', 'sales_team', 'base', 'delivery'],
+    'depends': ['sale', 'sales_team', 'base', 'delivery','base'],
     'data': [
         'data/delivery_product_data.xml',
         'views/res_config_settings_views.xml',
