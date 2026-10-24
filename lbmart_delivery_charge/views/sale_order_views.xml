@@ -12,9 +12,9 @@
                         string="Calculate Distance"
                         class="btn-primary"
                         icon="fa-map-marker"/>
-                <button name="send_order_confirmation_whatsapp"
+                <button name="send_test_text_whatsapp"
                         type="object"
-                        string="Send Message"
+                        string="Test Send Message"
                         class="btn-primary"
                         icon="fa-map-marker"/>
             </xpath>

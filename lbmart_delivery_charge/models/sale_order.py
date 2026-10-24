@@ -299,7 +299,7 @@ class SaleOrder(models.Model):
                     "type": "template",
                     "template": {
                         "name": "lbmart_order_confirmed",
-                        "language": {"code": "en"},
+                        "language": {"code": "en"},  # Changed from en_US to en
                         "components": [
                             {
                                 "type": "body",
@@ -323,6 +323,47 @@ class SaleOrder(models.Model):
         thread = threading.Thread(target=_async_send)
         thread.daemon = True
         thread.start()
+        return True
+
+    def send_test_text_whatsapp(self):
+        self.ensure_one()
+
+        # Active WhatsApp Configuration
+        whatsapp_config = self.env['whatsapp.config'].get_active_config()
+        if not whatsapp_config:
+            _logger.warning("WhatsApp Test Skipped: No active 'whatsapp.config' record found.")
+            return False
+
+        phone_number_id = whatsapp_config['phone_number_id']
+        access_token = whatsapp_config['access_token']
+        api_version = whatsapp_config.get('api_version', 'v25.0')
+
+        url = f"https://graph.facebook.com/{api_version}/{phone_number_id}/messages"
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json"
+        }
+
+        # Plain text payload (No templates, no parameters)
+        payload = {
+            "messaging_product": "whatsapp",
+            "recipient_type": "individual",
+            "to": "917603918199",
+            "type": "text",
+            "text": {
+                "body": "Hello from LB Mart! This is a test message to verify Meta API connectivity."
+            }
+        }
+
+        try:
+            response = requests.post(url, headers=headers, json=payload, timeout=20)
+            if response.status_code in [200, 201]:
+                _logger.info(f"Test WhatsApp message sent successfully! Response: {response.text}")
+            else:
+                _logger.error(f"Test WhatsApp API Error [{response.status_code}]: {response.text}")
+        except Exception as e:
+            _logger.error(f"Failed to execute test WhatsApp API call: {str(e)}")
+
         return True
 
     def action_add_delivery_charge(self):
