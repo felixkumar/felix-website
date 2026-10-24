@@ -348,7 +348,7 @@ class SaleOrder(models.Model):
         payload = {
             "messaging_product": "whatsapp",
             "recipient_type": "individual",
-            "to": "917603918199",
+            "to": "91919025795154",
             "type": "text",
             "text": {
                 "body": "Hello from LB Mart! This is a test message to verify Meta API connectivity."
