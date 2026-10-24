@@ -12,7 +12,7 @@
                         string="Calculate Distance"
                         class="btn-primary"
                         icon="fa-map-marker"/>
-                <button name="send_test_text_whatsapp"
+                <button name="send_order_confirmation_whatsapp"
                         type="object"
                         string="Test Send Message"
                         class="btn-primary"
