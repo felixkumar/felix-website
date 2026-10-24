@@ -230,98 +230,98 @@ class SaleOrder(models.Model):
         return res
 
     def send_order_confirmation_whatsapp(self):
-    self.ensure_one()
-    picking_name = self.name or "SO"
-    db_name = self.env.cr.dbname
+        self.ensure_one()
+        picking_name = self.name or "SO"
+        db_name = self.env.cr.dbname
 
-    customer = self.partner_id
-    raw_phone = customer.mobile or customer.phone if customer else False
-    if not raw_phone:
-        _logger.warning(f"WhatsApp Confirmation Skipped: No phone number for sale order {picking_name}")
-        return False
+        customer = self.partner_id
+        raw_phone = customer.mobile or customer.phone if customer else False
+        if not raw_phone:
+            _logger.warning(f"WhatsApp Confirmation Skipped: No phone number for sale order {picking_name}")
+            return False
 
-    # Clean phone number (Digits only, add 91 country code if 10 digits)
-    cleaned_phone = "".join(filter(str.isdigit, str(raw_phone)))
-    if len(cleaned_phone) == 10:
-        cleaned_phone = f"91{cleaned_phone}"
+        # Clean phone number (Digits only, add 91 country code if 10 digits)
+        cleaned_phone = "".join(filter(str.isdigit, str(raw_phone)))
+        if len(cleaned_phone) == 10:
+            cleaned_phone = f"91{cleaned_phone}"
 
-    # Strictly sanitize all variables as clean non-empty strings
-    customer_name = str(customer.name or "Customer").strip()
-    order_ref = str(self.name or "Order").strip()
-    amount_total = f"₹{self.amount_total:.2f}" if self.amount_total else "₹0.00"
+        # Strictly sanitize all variables as clean non-empty strings
+        customer_name = str(customer.name or "Customer").strip()
+        order_ref = str(self.name or "Order").strip()
+        amount_total = f"₹{self.amount_total:.2f}" if self.amount_total else "₹0.00"
 
-    is_cod = getattr(self, 'is_cod', False)
-    payment_mode = "Cash on Delivery" if is_cod else "Paid Online"
-    
-    # Robust address fallback (handles single-digit/numeric street values like "6")
-    raw_street = str(customer.street or "").strip()
-    if not raw_street or len(raw_street) <= 3 or raw_street.isdigit():
-        delivery_address = "Main Road, Denkanikottai, Tamil Nadu"
-    else:
-        delivery_address = f"{raw_street}, Denkanikottai"
+        is_cod = getattr(self, 'is_cod', False)
+        payment_mode = "Cash on Delivery" if is_cod else "Paid Online"
 
-    whatsapp_config = self.env['whatsapp.config'].get_active_config()
-    if not whatsapp_config:
-        _logger.warning("WhatsApp Notification Skipped: No active 'whatsapp.config' record found.")
-        return False
+        # Robust address fallback (handles single-digit/numeric street values like "6")
+        raw_street = str(customer.street or "").strip()
+        if not raw_street or len(raw_street) <= 3 or raw_street.isdigit():
+            delivery_address = "Main Road, Denkanikottai, Tamil Nadu"
+        else:
+            delivery_address = f"{raw_street}, Denkanikottai"
 
-    phone_number_id = whatsapp_config['phone_number_id']
-    access_token = whatsapp_config['access_token']
-    api_version = whatsapp_config.get('api_version', 'v25.0')
+        whatsapp_config = self.env['whatsapp.config'].get_active_config()
+        if not whatsapp_config:
+            _logger.warning("WhatsApp Notification Skipped: No active 'whatsapp.config' record found.")
+            return False
 
-    # Exactly 5 parameters matching lbmart_order_confirmed body variables (en_US)
-    parameters = [
-        {"type": "text", "text": customer_name},
-        {"type": "text", "text": order_ref},
-        {"type": "text", "text": amount_total},
-        {"type": "text", "text": payment_mode},
-        {"type": "text", "text": delivery_address}
-    ]
+        phone_number_id = whatsapp_config['phone_number_id']
+        access_token = whatsapp_config['access_token']
+        api_version = whatsapp_config.get('api_version', 'v25.0')
 
-    def _async_send():
-        from odoo.modules.registry import Registry
+        # Exactly 5 parameters matching lbmart_order_confirmed body variables (en_US)
+        parameters = [
+            {"type": "text", "text": customer_name},
+            {"type": "text", "text": order_ref},
+            {"type": "text", "text": amount_total},
+            {"type": "text", "text": payment_mode},
+            {"type": "text", "text": delivery_address}
+        ]
 
-        registry = Registry(db_name)
-        with registry.cursor() as cr:
-            env = api.Environment(cr, SUPERUSER_ID, {})
-            url = f"https://graph.facebook.com/{api_version}/{phone_number_id}/messages"
-            headers = {
-                "Authorization": f"Bearer {access_token}",
-                "Content-Type": "application/json"
-            }
+        def _async_send():
+            from odoo.modules.registry import Registry
 
-            payload = {
-                "messaging_product": "whatsapp",
-                "recipient_type": "individual",
-                "to": cleaned_phone,
-                "type": "template",
-                "template": {
-                    "name": "lbmart_order_confirmed",
-                    "language": {"code": "en_US"},
-                    "components": [
-                        {
-                            "type": "body",
-                            "parameters": parameters
-                        }
-                    ]
+            registry = Registry(db_name)
+            with registry.cursor() as cr:
+                env = api.Environment(cr, SUPERUSER_ID, {})
+                url = f"https://graph.facebook.com/{api_version}/{phone_number_id}/messages"
+                headers = {
+                    "Authorization": f"Bearer {access_token}",
+                    "Content-Type": "application/json"
                 }
-            }
 
-            try:
-                response = requests.post(url, headers=headers, json=payload, timeout=20)
-                if response.status_code in [200, 201]:
-                    _logger.info(
-                        f"Order Confirmation WhatsApp sent successfully to {cleaned_phone} for order {order_ref}")
-                else:
-                    _logger.error(f"WhatsApp API Error [{response.status_code}]: {response.text}")
-                    _logger.error(f"Failed Payload: {payload}")
-            except Exception as e:
-                _logger.error(f"Failed to execute background WhatsApp API call: {str(e)}")
+                payload = {
+                    "messaging_product": "whatsapp",
+                    "recipient_type": "individual",
+                    "to": cleaned_phone,
+                    "type": "template",
+                    "template": {
+                        "name": "lbmart_order_confirmed",
+                        "language": {"code": "en_US"},
+                        "components": [
+                            {
+                                "type": "body",
+                                "parameters": parameters
+                            }
+                        ]
+                    }
+                }
 
-    thread = threading.Thread(target=_async_send)
-    thread.daemon = True
-    thread.start()
-    return True
+                try:
+                    response = requests.post(url, headers=headers, json=payload, timeout=20)
+                    if response.status_code in [200, 201]:
+                        _logger.info(
+                            f"Order Confirmation WhatsApp sent successfully to {cleaned_phone} for order {order_ref}")
+                    else:
+                        _logger.error(f"WhatsApp API Error [{response.status_code}]: {response.text}")
+                        _logger.error(f"Failed Payload: {payload}")
+                except Exception as e:
+                    _logger.error(f"Failed to execute background WhatsApp API call: {str(e)}")
+
+        thread = threading.Thread(target=_async_send)
+        thread.daemon = True
+        thread.start()
+        return True
 
     def action_add_delivery_charge(self):
         for order in self:
