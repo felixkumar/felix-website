@@ -299,7 +299,7 @@ class SaleOrder(models.Model):
                     "type": "template",
                     "template": {
                         "name": "lbmart_order_confirmed",
-                        "language": {"code": "en_US"},
+                        "language": {"code": "en"},
                         "components": [
                             {
                                 "type": "body",
