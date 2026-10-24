@@ -245,10 +245,12 @@ class SaleOrder(models.Model):
         if len(cleaned_phone) == 10:
             cleaned_phone = f"91{cleaned_phone}"
 
-        # Strictly sanitize all variables as clean non-empty strings
+        # Strictly sanitize all variables as clean Meta-safe strings (NO slashes, NO ₹ symbols)
         customer_name = str(customer.name or "Customer").strip()
-        order_ref = str(self.name or "Order").strip()
-        amount_total = f"₹{self.amount_total:.2f}" if self.amount_total else "₹0.00"
+        order_ref = str(self.name or "Order").strip().replace('/', '-')
+
+        raw_amount = self.amount_total or 0.0
+        amount_total = f"Rs. {raw_amount:.2f}"
 
         is_cod = getattr(self, 'is_cod', False)
         payment_mode = "Cash on Delivery" if is_cod else "Paid Online"
