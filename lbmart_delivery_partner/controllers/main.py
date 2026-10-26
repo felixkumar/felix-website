@@ -2426,9 +2426,9 @@ class DeliveryAndClientAPI(http.Controller):
 
     @http.route('/api/signup/verify_otp', type='json', auth='public', methods=['POST'], csrf=False)
     def verify_signup_otp(self, **kw):
-        login = kw.get('login')
-        email_otp = kw.get('email_otp')
-        whatsapp_otp = kw.get('whatsapp_otp')
+        login = (kw.get('login') or '').strip().lower()
+        email_otp = (kw.get('email_otp') or '').strip()
+        whatsapp_otp = (kw.get('whatsapp_otp') or '').strip()
 
         if not all([login, email_otp, whatsapp_otp]):
             return {
@@ -2437,10 +2437,11 @@ class DeliveryAndClientAPI(http.Controller):
             }
 
         try:
+            # 1. Search for active, unverified temporary signup session
             temp_user = request.env['signup.temp.user'].sudo().search([
                 ('login', '=', login),
                 ('is_verified', '=', False)
-            ], limit=1)
+            ], order='create_date desc', limit=1)
 
             if not temp_user.exists():
                 return {
@@ -2448,9 +2449,38 @@ class DeliveryAndClientAPI(http.Controller):
                     'message': 'No pending signup session found for this email. Please request an OTP first.'
                 }
 
+            # 2. Check if OTPs match the record
+            if str(temp_user.email_otp).strip() != email_otp:
+                return {
+                    'status': 'error',
+                    'message': 'Invalid Email OTP code.'
+                }
+
+            if str(temp_user.whatsapp_otp).strip() != whatsapp_otp:
+                return {
+                    'status': 'error',
+                    'message': 'Invalid WhatsApp OTP code.'
+                }
+
+            # 3. Check for OTP Expiration (e.g., 10 minutes)
+            if temp_user.create_date:
+                expiration_time = temp_user.create_date + datetime.timedelta(minutes=10)
+                if fields.Datetime.now() > expiration_time:
+                    return {
+                        'status': 'error',
+                        'message': 'OTP has expired. Please request a new verification code.'
+                    }
+
+            # 4. Mark temporary session as verified
+            temp_user.write({'is_verified': True})
+
+            # 5. Optional: Call your logic to create/activate the permanent user record
+            # user = temp_user._action_create_actual_user()
+
             return {
                 'status': 'success',
                 'message': 'Account verified and created successfully!',
+                'user_id': temp_user.id
             }
 
         except UserError as ue:
