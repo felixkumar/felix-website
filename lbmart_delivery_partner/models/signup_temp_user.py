@@ -140,7 +140,17 @@ class SignupTempUser(models.Model):
                         "components": [
                             {
                                 "type": "body",
-                                "parameters": parameters
+                                "parameters": [
+                                    {"type": "text", "text": otp_code}
+                                ]
+                            },
+                            {
+                                "type": "button",
+                                "sub_type": "url",
+                                "index": "0",
+                                "parameters": [
+                                    {"type": "text", "text": otp_code}
+                                ]
                             }
                         ]
                     }
