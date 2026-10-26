@@ -136,7 +136,7 @@ class SignupTempUser(models.Model):
                     "to": cleaned_phone,
                     "type": "template",
                     "template": {
-                        "name": "lbmart_otp_verification",
+                        "name": "lbmart_signup_otp",
                         "language": {"code": "en"},
                         "components": [
                             {
