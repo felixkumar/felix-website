@@ -113,7 +113,6 @@ class SignupTempUser(models.Model):
 
         # Template parameters matching your approved Meta template body variables
         parameters = [
-            {"type": "text", "text": user_name},
             {"type": "text", "text": otp_code}
         ]
 
