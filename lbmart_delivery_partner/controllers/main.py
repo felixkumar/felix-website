@@ -2479,7 +2479,7 @@ class DeliveryAndClientAPI(http.Controller):
 
             return {
                 'status': 'success',
-                'message': 'Account verified and created successfully!',
+                'message': 'Account verified successfully!',
                 'user_id': temp_user.id
             }
 
