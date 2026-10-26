@@ -85,7 +85,7 @@ class SignupTempUser(models.Model):
             _logger.error(f"Failed to send Email OTP to {self.login}: {str(e)}")
 
     def _send_whatsapp_otp(self):
-        """Send WhatsApp OTP via Meta Cloud API using background threading and active config."""
+        """Send WhatsApp OTP via Meta Cloud API using background threading, active config, and retry logic."""
         self.ensure_one()
         db_name = self.env.cr.dbname
         raw_phone = self.phone
@@ -119,6 +119,7 @@ class SignupTempUser(models.Model):
 
         def _async_send():
             from odoo.modules.registry import Registry
+            import time
 
             registry = Registry(db_name)
             with registry.cursor() as cr:
@@ -135,7 +136,7 @@ class SignupTempUser(models.Model):
                     "to": cleaned_phone,
                     "type": "template",
                     "template": {
-                        "name": "lbmart_otp_verification",  # Update with your Meta template name
+                        "name": "lbmart_otp_verification",
                         "language": {"code": "en"},
                         "components": [
                             {
@@ -146,15 +147,28 @@ class SignupTempUser(models.Model):
                     }
                 }
 
-                try:
-                    response = requests.post(url, headers=headers, json=payload, timeout=20)
-                    if response.status_code in [200, 201]:
-                        _logger.info(f"WhatsApp OTP sent successfully to {cleaned_phone}")
-                    else:
-                        _logger.error(f"WhatsApp API Error [{response.status_code}]: {response.text}")
-                        _logger.error(f"Failed Payload: {payload}")
-                except Exception as e:
-                    _logger.error(f"Failed to execute background WhatsApp API call for OTP: {str(e)}")
+                # Retry logic: Try up to 3 times if network timeout occurs
+                max_retries = 3
+                for attempt in range(1, max_retries + 1):
+                    try:
+                        # Increased timeout to 35 seconds
+                        response = requests.post(url, headers=headers, json=payload, timeout=35)
+                        if response.status_code in [200, 201]:
+                            _logger.info(f"WhatsApp OTP sent successfully to {cleaned_phone}")
+                            return
+                        else:
+                            _logger.error(f"WhatsApp API Error [{response.status_code}]: {response.text}")
+                            _logger.error(f"Failed Payload: {payload}")
+                            break  # Don't retry on client/server API errors (like bad tokens or template errors)
+                    except requests.exceptions.Timeout:
+                        _logger.warning(f"WhatsApp API Timeout (Attempt {attempt}/{max_retries}) for {cleaned_phone}")
+                        if attempt == max_retries:
+                            _logger.error("WhatsApp API failed after maximum retry attempts due to timeouts.")
+                        else:
+                            time.sleep(2)  # Wait 2 seconds before retrying
+                    except Exception as e:
+                        _logger.error(f"Failed to execute background WhatsApp API call for OTP: {str(e)}")
+                        break
 
         thread = threading.Thread(target=_async_send)
         thread.daemon = True
