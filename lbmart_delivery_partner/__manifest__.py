@@ -11,6 +11,7 @@
         'views/stock_picking_views.xml',
         'views/delivery_cash_handover_views.xml',
         'views/whatsapp_config_views.xml',
+        'views/signup_temp_user_views.xml',
     ],
     'installable': True,
     'application': True,

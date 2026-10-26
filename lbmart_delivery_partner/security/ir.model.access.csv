@@ -3,3 +3,4 @@ access_delivery_partner_shift,delivery.partner.shift,model_delivery_partner_shif
 access_delivery_cash_handover,delivery.cash.handover,model_delivery_cash_handover,base.group_user,1,1,1,1
 access_delivery_cash_handover_line,delivery.cash.handover.line,model_delivery_cash_handover_line,base.group_user,1,1,1,1
 access_whatsapp_config,whatsapp.config,model_whatsapp_config,base.group_user,1,1,1,1
+access_signup_temp_user,signup.temp.user,model_signup_temp_user,base.group_user,1,1,1,1

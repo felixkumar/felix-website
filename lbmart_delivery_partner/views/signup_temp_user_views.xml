@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Tree / List View -->
+    <record id="view_signup_temp_user_tree" model="ir.ui.view">
+        <field name="name">signup.temp.user.tree</field>
+        <field name="model">signup.temp.user</field>
+        <field name="arch" type="xml">
+            <list string="Temporary Signup Requests" decoration-success="is_verified == True" decoration-warning="is_verified == False">
+                <field name="name"/>
+                <field name="login"/>
+                <field name="phone"/>
+                <field name="email_otp"/>
+                <field name="whatsapp_otp"/>
+                <field name="otp_expiry"/>
+                <field name="is_verified" widget="boolean_toggle"/>
+                <field name="create_date" string="Requested On"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_signup_temp_user_form" model="ir.ui.view">
+        <field name="name">signup.temp.user.form</field>
+        <field name="model">signup.temp.user</field>
+        <field name="arch" type="xml">
+            <form string="Temporary Signup Request">
+                <header>
+                    <button name="generate_otps" string="Resend OTPs" type="object" class="oe_highlight" invisible="is_verified"/>
+                    <field name="is_verified" widget="boolean_toggle" readonly="1"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1>
+                            <field name="name" placeholder="Full Name" readonly="is_verified"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="User Credentials">
+                            <field name="login" widget="email" readonly="is_verified"/>
+                            <field name="phone" widget="phone" readonly="is_verified"/>
+                            <field name="password" password="True" readonly="is_verified"/>
+                        </group>
+                        <group string="OTP Status">
+                            <field name="email_otp" readonly="1"/>
+                            <field name="whatsapp_otp" readonly="1"/>
+                            <field name="otp_expiry" readonly="1"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search / Filter View -->
+    <record id="view_signup_temp_user_search" model="ir.ui.view">
+        <field name="name">signup.temp.user.search</field>
+        <field name="model">signup.temp.user</field>
+        <field name="arch" type="xml">
+            <search string="Search Temp Signups">
+                <field name="name"/>
+                <field name="login"/>
+                <field name="phone"/>
+                <filter string="Pending Verification" name="pending" domain="[('is_verified', '=', False)]"/>
+                <filter string="Verified" name="verified" domain="[('is_verified', '=', True)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Verification Status" name="groupby_verified" context="{'group_by': 'is_verified'}"/>
+                    <filter string="Created Date" name="groupby_date" context="{'group_by': 'create_date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Window Action -->
+    <record id="action_signup_temp_user" model="ir.actions.act_window">
+        <field name="name">Temp Signups (OTP)</field>
+        <field name="res_model">signup.temp.user</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_signup_temp_user_search"/>
+        <field name="context">{'search_default_pending': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No temporary signup requests yet!
+            </p>
+            <p>
+                Mobile app signup requests requiring dual OTP verification will be staged here prior to account creation.
+            </p>
+        </field>
+    </record>
+
+    <!-- App Root Menu and Sub-Menu -->
+    <menuitem id="menu_signup_temp_user_root"
+              name="OTP Signups"
+              web_icon="base,static/description/icon.png"
+              sequence="20"/>
+
+    <menuitem id="menu_signup_temp_user_list"
+              name="Staged Registrations"
+              parent="menu_signup_temp_user_root"
+              action="action_signup_temp_user"
+              sequence="10"/>
+
+</odoo>

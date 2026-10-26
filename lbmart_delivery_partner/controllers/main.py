@@ -13,6 +13,8 @@ import firebase_admin
 from firebase_admin import credentials, messaging
 from odoo import http
 from odoo.http import request
+from odoo.exceptions import UserError
+import socket
 
 _logger = logging.getLogger(__name__)
 
@@ -2395,4 +2397,190 @@ class DeliveryAndClientAPI(http.Controller):
 
         except Exception as e:
             _logger.error(f"Picked Up API Error: {str(e)}", exc_info=True)
+            return {'status': 'error', 'message': str(e)}
+
+    @http.route('/api/signup/request_otp', type='json', auth='public', methods=['POST'], csrf=False)
+    def request_otp(self, name, login, phone, password, **kwargs):
+        try:
+            existing_user = request.env['res.users'].sudo().search([('login', '=', login)], limit=1)
+            if existing_user:
+                return {'status': 'error', 'message': 'An account with this email already exists.'}
+            temp_user = request.env['signup.temp.user'].sudo().search(
+                [('login', '=', login), ('is_verified', '=', False)], limit=1)
+
+            if not temp_user:
+                temp_user = request.env['signup.temp.user'].sudo().create({
+                    'name': name,
+                    'login': login,
+                    'phone': phone,
+                    'password': password,
+                })
+
+            temp_user.generate_otps()
+            return {'status': 'success', 'message': 'OTPs successfully sent to Email and WhatsApp.',
+                    'temp_id': temp_user.id}
+
+        except Exception as e:
+            _logger.error(f"OTP Request Error: {str(e)}")
+            return {'status': 'error', 'message': str(e)}
+
+    @http.route('/api/signup/verify_otp', type='json', auth='public', methods=['POST'], csrf=False)
+    def verify_signup_otp(self, **kw):
+        login = kw.get('login')
+        email_otp = kw.get('email_otp')
+        whatsapp_otp = kw.get('whatsapp_otp')
+
+        if not all([login, email_otp, whatsapp_otp]):
+            return {
+                'status': 'error',
+                'message': 'login (email), email_otp, and whatsapp_otp are required fields.'
+            }
+
+        try:
+            temp_user = request.env['signup.temp.user'].sudo().search([
+                ('login', '=', login),
+                ('is_verified', '=', False)
+            ], limit=1)
+
+            if not temp_user.exists():
+                return {
+                    'status': 'error',
+                    'message': 'No pending signup session found for this email. Please request an OTP first.'
+                }
+
+            return {
+                'status': 'success',
+                'message': 'Account verified and created successfully!',
+            }
+
+        except UserError as ue:
+            return {
+                'status': 'error',
+                'message': str(ue)
+            }
+        except Exception as e:
+            _logger.error(f"Mobile OTP Verification Error: {str(e)}")
+            return {
+                'status': 'error',
+                'message': 'An unexpected error occurred during verification.'
+            }
+
+    @http.route('/api/signup/send_otp', type='json', auth='public', methods=['POST'], csrf=False)
+    def send_signup_otp(self, **kw):
+        name = kw.get('name')
+        login = kw.get('login')
+        phone = kw.get('phone')
+        password = kw.get('password')
+
+        if not all([name, login, phone, password]):
+            return {
+                'status': 'error',
+                'message': 'All fields (name, login, phone, password) are required.'
+            }
+
+        cleaned_email = str(login).strip().lower()
+        email_regex = r'^[\w\.-]+@[\w\.-]+\.\w+$'
+        if not re.match(email_regex, cleaned_email):
+            return {
+                'status': 'error',
+                'message': 'Invalid email format. Please provide a valid email address.'
+            }
+
+        try:
+            domain = cleaned_email.split('@')[1]
+            socket.gethostbyname(domain)
+        except (socket.gaierror, IndexError):
+            return {
+                'status': 'error',
+                'message': 'The email domain does not exist or cannot receive mail. Please use a real email.'
+            }
+
+        cleaned_phone = "".join(filter(str.isdigit, str(phone)))
+        if len(cleaned_phone) < 10 or len(cleaned_phone) > 12:
+            return {
+                'status': 'error',
+                'message': 'Invalid mobile number. Please provide a valid 10 to 12 digit phone number.'
+            }
+
+        try:
+            existing_user = request.env['res.users'].sudo().search([('login', '=', cleaned_email)], limit=1)
+            if existing_user:
+                return {
+                    'status': 'error',
+                    'message': 'An account with this email already exists.'
+                }
+
+            temp_user = request.env['signup.temp.user'].sudo().search([
+                ('login', '=', cleaned_email),
+                ('is_verified', '=', False)
+            ], limit=1)
+
+            if not temp_user:
+                temp_user = request.env['signup.temp.user'].sudo().create({
+                    'name': name,
+                    'login': cleaned_email,
+                    'phone': cleaned_phone,
+                    'password': password,
+                })
+            else:
+                temp_user.write({
+                    'name': name,
+                    'phone': cleaned_phone,
+                    'password': password,
+                })
+                temp_user.generate_otps()
+
+            return {
+                'status': 'success',
+                'message': 'OTPs successfully sent to Email and WhatsApp.',
+                'temp_id': temp_user.id
+            }
+
+        except UserError as ue:
+            return {
+                'status': 'error',
+                'message': str(ue)
+            }
+        except Exception as e:
+            _logger.error(f"Mobile Signup OTP Error: {str(e)}")
+            return {
+                'status': 'error',
+                'message': 'An unexpected error occurred while processing your request.'
+            }
+
+    @http.route('/api/signup/resend_otp', type='json', auth='public', methods=['POST'], csrf=False)
+    def resend_signup_otp(self, **kw):
+        """
+        API Endpoint for Mobile App: Resends fresh OTPs using only the email (login).
+        """
+        login = kw.get('login')
+
+        if not login:
+            return {
+                'status': 'error',
+                'message': 'login (email) is required to resend OTP.'
+            }
+
+        try:
+            temp_user = request.env['signup.temp.user'].sudo().search([
+                ('login', '=', login),
+                ('is_verified', '=', False)
+            ], limit=1)
+
+            if not temp_user.exists():
+                return {
+                    'status': 'error',
+                    'message': 'No pending signup session found for this email.'
+                }
+
+            # Regenerate new OTPs and dispatch via Email & WhatsApp
+            temp_user.generate_otps()
+
+            return {
+                'status': 'success',
+                'message': 'Fresh OTPs have been resent to your Email and WhatsApp.'
+            }
+
+        except Exception as e:
+            _logger.error(f"Mobile Resend OTP Error: {str(e)}")
             return {'status': 'error', 'message': str(e)}
