@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="lb_fresh_privacy_policy_template" name="LB Fresh App Privacy Policy">
+        <t t-call="website.layout">
+            <t t-set="title">Privacy Policy – LB Fresh</t>
+            <div id="wrap" class="oe_structure">
+                <section class="py-5 bg-light">
+                    <div class="container">
+                        <div class="row justify-content-center">
+                            <div class="col-lg-10 col-xl-9">
+                                <div class="card shadow-sm border-0 rounded-3">
+                                    <div class="card-body p-4 p-md-5">
+
+                                        <!-- Header -->
+                                        <div class="border-bottom pb-4 mb-4">
+                                            <h1 class="fw-bold text-dark mb-2">PRIVACY POLICY – LB FRESH</h1>
+                                            <p class="text-muted mb-0">
+                                                <strong>Effective Date:</strong> 16 November 2026<br/>
+                                                <strong>Last Updated:</strong> 16 November 2026
+                                            </p>
+                                        </div>
+
+                                        <!-- 1. About This Privacy Policy -->
+                                        <div class="mb-4">
+                                            <h3 class="h5 fw-bold text-dark">1. About This Privacy Policy</h3>
+                                            <p>Welcome to <strong>LB Fresh</strong>.</p>
+                                            <p>LB Fresh ("we", "our", "us", or "the Company"), operated by <strong>LB Mart</strong>, provides an online grocery shopping and delivery platform through our official website (<a href="https://lbfreshbasket.com/">https://lbfreshbasket.com/</a>) and our <strong>LB Fresh</strong> Android mobile application (the "App").</p>
+                                            <p>This Privacy Policy explains how we collect, use, store, share, and protect your personal information when you visit our website, use our mobile application, place orders, or interact with our services.</p>
+                                            <p>By accessing or using LB Fresh, you acknowledge that you have read and understood this Privacy Policy.</p>
+                                        </div>
+
+                                        <!-- 2. Information We Collect -->
+                                        <div class="mb-4">
+                                            <h3 class="h5 fw-bold text-dark">2. Information We Collect</h3>
+                                            <p>We collect only the information necessary to provide grocery ordering, delivery, and customer support services.</p>
+
+                                            <h4 class="h6 fw-bold mt-3">2.1 Personal &amp; Account Information</h4>
+                                            <ul>
+                                                <li>Full name</li>
+                                                <li>Mobile phone number (used for OTP verification and delivery coordination)</li>
+                                                <li>Email address</li>
+                                                <li>Account credentials and encrypted authentication/session tokens</li>
+                                            </ul>
+
+                                            <h4 class="h6 fw-bold mt-3">2.2 Delivery Address Information</h4>
+                                            <p>When you save an address or place an order, we collect:</p>
+                                            <ul>
+                                                <li>House, flat, or building number</li>
+                                                <li>Street, landmark, and locality</li>
+                                                <li>City, district, state, and PIN code</li>
+                                                <li>Delivery instructions and recipient contact number</li>
+                                            </ul>
+
+                                            <h4 class="h6 fw-bold mt-3">2.3 Order &amp; Transaction Information</h4>
+                                            <ul>
+                                                <li>Order ID, order date, and time</li>
+                                                <li>Purchased products, quantities, and cart preferences</li>
+                                                <li>Order status, delivery logs, cancellations, and refund records</li>
+                                                <li>Billing and tax invoice details</li>
+                                            </ul>
+
+                                            <h4 class="h6 fw-bold mt-3">2.4 Payment Information</h4>
+                                            <p>LB Fresh supports multiple payment methods, including UPI, debit cards, credit cards, net banking, digital wallets, and Cash on Delivery (COD).</p>
+                                            <ul>
+                                                <li>Online payments are processed securely through PCI-DSS compliant third-party payment gateway providers (such as <strong>Razorpay</strong>).</li>
+                                                <li>We receive transaction reference IDs, payment status, payment method type, and refund details.</li>
+                                                <li><strong>We do not collect, process, or store your full credit/debit card numbers, CVV, UPI PINs, or net banking passwords on our servers.</strong></li>
+                                            </ul>
+
+                                            <h4 class="h6 fw-bold mt-3">2.5 Device and Application Information</h4>
+                                            <p>When you use the LB Fresh mobile application, we automatically collect limited technical data to ensure app stability, security, and order notifications:</p>
+                                            <ul>
+                                                <li>Device model, manufacturer, and Android operating system version</li>
+                                                <li>App version and network connection information</li>
+                                                <li>IP address and unique device/app instance identifiers</li>
+                                                <li>Push notification tokens (via <strong>Google Firebase Cloud Messaging</strong>) to send real-time order updates</li>
+                                                <li>Application crash reports, error logs, and diagnostic performance metrics</li>
+                                            </ul>
+
+                                            <h4 class="h6 fw-bold mt-3">2.6 Location Information</h4>
+                                            <ul>
+                                                <li>With your explicit permission, we may access your device's approximate or precise GPS location solely to help you pin your accurate delivery address and verify serviceability in your area.</li>
+                                                <li>We do not track your background location when the app is not in use. You can enable or revoke location access at any time through your Android device settings.</li>
+                                            </ul>
+
+                                            <h4 class="h6 fw-bold mt-3">2.7 Customer Support Information</h4>
+                                            <p>When you contact us for support, we collect your name, phone number, email address, order details, and any messages or attachments you share to resolve your issue.</p>
+                                        </div>
+
+                                        <!-- 3. How We Use Your Information -->
+                                        <div class="mb-4">
+                                            <h3 class="h5 fw-bold text-dark">3. How We Use Your Information</h3>
+                                            <p>We use the collected information strictly for legitimate business purposes:</p>
+                                            <ul>
+                                                <li>To create, verify, and manage your LB Fresh customer account.</li>
+                                                <li>To process, pack, and deliver your grocery orders accurately.</li>
+                                                <li>To process online payments, Cash on Delivery settlements, cancellations, and refunds.</li>
+                                                <li>To send essential transactional communications (OTPs, order confirmations, and delivery status alerts).</li>
+                                                <li>To provide customer support and resolve order or product issues.</li>
+                                                <li>To monitor app performance, fix crashes, prevent fraud, and maintain platform security.</li>
+                                                <li>To comply with applicable Indian tax, food safety, and legal obligations.</li>
+                                            </ul>
+                                        </div>
+
+                                        <!-- 4. Sharing of Personal Information & Third-Party Services -->
+                                        <div class="mb-4">
+                                            <h3 class="h5 fw-bold text-dark">4. Sharing of Personal Information &amp; Third-Party Services</h3>
+                                            <p><strong>We do not sell, rent, or trade your personal information to third parties.</strong></p>
+                                            <p>We share necessary data only with trusted third-party service providers required to operate LB Fresh:</p>
+                                            <ul>
+                                                <li><strong>Payment Gateway Providers (e.g., Razorpay):</strong> To securely process online payments, verify transactions, and issue refunds.</li>
+                                                <li><strong>Delivery &amp; Logistics Personnel:</strong> Your name, delivery address, phone number, and order summary are shared with assigned delivery partners strictly to complete your delivery.</li>
+                                                <li><strong>Cloud Hosting &amp; Infrastructure Providers:</strong> Secure servers and database hosting providers used to operate our website, mobile application, and backend ERP systems.</li>
+                                                <li><strong>Notification &amp; Diagnostic Services (e.g., Google Firebase):</strong> Used to deliver push notifications for order updates and collect anonymous crash diagnostics to improve app stability.</li>
+                                                <li><strong>SMS &amp; Communication Gateways:</strong> Used to send login OTPs and essential order alerts.</li>
+                                                <li><strong>Government &amp; Legal Authorities:</strong> Information may be disclosed when required by applicable Indian law, court order, or valid regulatory request.</li>
+                                            </ul>
+                                            <p>All third-party providers are bound by confidentiality and data security obligations.</p>
+                                        </div>
+
+                                        <!-- 5. Data Security -->
+                                        <div class="mb-4">
+                                            <h3 class="h5 fw-bold text-dark">5. Data Security</h3>
+                                            <p>We implement industry-standard technical and organizational safeguards to protect your personal data against unauthorized access, alteration, disclosure, or loss, including:</p>
+                                            <ul>
+                                                <li>Encryption of data in transit using HTTPS / TLS protocols.</li>
+                                                <li>Role-based access controls and strict authentication checks.</li>
+                                                <li>Secure database management and regular encrypted backups.</li>
+                                                <li>Continuous security monitoring and vulnerability patching.</li>
+                                            </ul>
+                                            <p>While we take strong precautions to protect your data, no method of electronic transmission or storage is 100% immune to risk.</p>
+                                        </div>
+
+                                        <!-- 6. Data Retention -->
+                                        <div class="mb-4">
+                                            <h3 class="h5 fw-bold text-dark">6. Data Retention</h3>
+                                            <p>We retain your personal information only for as long as your account is active or as reasonably necessary to fulfil the purposes outlined in this Policy.</p>
+                                            <p>Certain records may be retained after account closure where required by law or legitimate business necessity, including:</p>
+                                            <ul>
+                                                <li>Tax invoices, GST records, and financial transaction logs.</li>
+                                                <li>Dispute resolution, fraud prevention, and legal compliance records.</li>
+                                            </ul>
+                                            <p>Once retention periods expire, personal data is securely deleted or irreversibly anonymized.</p>
+                                        </div>
+
+                                        <!-- 7. Account Deletion and Data Removal -->
+                                        <div id="account-deletion" class="mb-4 p-3 bg-light rounded border">
+                                            <h3 class="h5 fw-bold text-dark">7. Account Deletion and Data Removal</h3>
+                                            <p>You have the right to delete your LB Fresh account and associated personal data at any time using either of the following methods:</p>
+
+                                            <h4 class="h6 fw-bold mt-3">Option 1: In-App Account Deletion</h4>
+                                            <ol>
+                                                <li>Open the <strong>LB Fresh</strong> mobile application and log into your account.</li>
+                                                <li>Go to <strong>Account / Profile → Settings → Delete Account</strong>.</li>
+                                                <li>Confirm your request to initiate permanent account deletion.</li>
+                                            </ol>
+
+                                            <h4 class="h6 fw-bold mt-3">Option 2: Web or Email Deletion Request</h4>
+                                            <p>If you have uninstalled the app or cannot access your account:</p>
+                                            <ul>
+                                                <li>Visit our dedicated Account Deletion page: <a href="https://lbfreshbasket.com/delete-account">https://lbfreshbasket.com/delete-account</a></li>
+                                                <li>Or email us at <a href="mailto:lbfreshbasket@gmail.com">lbfreshbasket@gmail.com</a> from your registered email address (or include your registered mobile number) with the subject line: <strong>Account Deletion Request – LB Fresh</strong>.</li>
+                                            </ul>
+
+                                            <h4 class="h6 fw-bold mt-3">Deletion Timeline &amp; Data Handling</h4>
+                                            <ul class="mb-0">
+                                                <li><strong>Processing Time:</strong> Upon verifying your identity, we will permanently delete your account, profile details, saved addresses, and login credentials within <strong>30 days</strong>.</li>
+                                                <li><strong>Retained Records:</strong> Completed order invoices and payment transaction records required for statutory tax, accounting, and fraud-prevention compliance under Indian law will be retained in restricted storage and will not be used for any other purpose.</li>
+                                                <li>Once completed, account deletion is permanent and cannot be undone.</li>
+                                            </ul>
+                                        </div>
+
+                                        <!-- 8. Cookies and Similar Technologies -->
+                                        <div class="mb-4">
+                                            <h3 class="h5 fw-bold text-dark">8. Cookies and Similar Technologies</h3>
+                                            <p>Our website (<a href="https://lbfreshbasket.com/">https://lbfreshbasket.com/</a>) uses essential cookies and session storage to keep you logged in, preserve your shopping cart, remember preferences, and analyze site performance. You can control or disable cookies through your browser settings, though certain site features may not function properly without them.</p>
+                                        </div>
+
+                                        <!-- 9. Third-Party Links -->
+                                        <div class="mb-4">
+                                            <h3 class="h5 fw-bold text-dark">9. Third-Party Links</h3>
+                                            <p>Our website or app may contain links to external third-party websites or payment portals. We are not responsible for the privacy practices or content of independent third-party services and encourage you to review their respective privacy policies.</p>
+                                        </div>
+
+                                        <!-- 10. Communications and Notifications -->
+                                        <div class="mb-4">
+                                            <h3 class="h5 fw-bold text-dark">10. Communications and Notifications</h3>
+                                            <ul>
+                                                <li><strong>Transactional Alerts:</strong> We send essential service notifications regarding OTP logins, order confirmations, delivery updates, and refunds.</li>
+                                                <li><strong>Promotional Communications:</strong> Where permitted by law, we may send offers or discount alerts. You can opt out of promotional notifications at any time via the app notification settings or your Android device settings.</li>
+                                            </ul>
+                                        </div>
+
+                                        <!-- 11. Children's Privacy -->
+                                        <div class="mb-4">
+                                            <h3 class="h5 fw-bold text-dark">11. Children's Privacy</h3>
+                                            <p>LB Fresh is intended for users aged 18 and older. We do not knowingly collect personal information from children under 18. If we discover that personal data from a minor has been collected inadvertently, we will promptly delete it.</p>
+                                        </div>
+
+                                        <!-- 12. Your Privacy Rights -->
+                                        <div class="mb-4">
+                                            <h3 class="h5 fw-bold text-dark">12. Your Privacy Rights</h3>
+                                            <p>Under applicable Indian privacy laws, including the <strong>Digital Personal Data Protection (DPDP) Act, 2023</strong>, you have the right to:</p>
+                                            <ul>
+                                                <li>Access a summary of the personal data we hold about you.</li>
+                                                <li>Correct or update inaccurate profile or address information.</li>
+                                                <li>Request erasure/deletion of your account and personal data.</li>
+                                                <li>Withdraw consent for optional device permissions (such as location or promotional notifications).</li>
+                                                <li>Nominate another individual to exercise your rights in the event of death or incapacity, as permitted under Indian law.</li>
+                                                <li>File a grievance or complaint regarding data handling.</li>
+                                            </ul>
+                                            <p>To exercise any of these rights, contact our Grievance &amp; Privacy Officer using the details in Section 15.</p>
+                                        </div>
+
+                                        <!-- 13. Applicable Law -->
+                                        <div class="mb-4">
+                                            <h3 class="h5 fw-bold text-dark">13. Applicable Law</h3>
+                                            <p>This Privacy Policy is governed by the laws of India, including the Information Technology Act, 2000, the Information Technology (Reasonable Security Practices and Procedures and Sensitive Personal Data or Information) Rules, 2011, and the Digital Personal Data Protection Act, 2023.</p>
+                                        </div>
+
+                                        <!-- 14. Changes to This Privacy Policy -->
+                                        <div class="mb-4">
+                                            <h3 class="h5 fw-bold text-dark">14. Changes to This Privacy Policy</h3>
+                                            <p>We may update this Privacy Policy periodically to reflect changes in our app features or legal requirements. Any updates will be published directly on this official page:</p>
+                                            <p><a href="https://lbfreshbasket.com/app-privacy-policy"><strong>https://lbfreshbasket.com/app-privacy-policy</strong></a></p>
+                                            <p>The updated policy will display a revised "Last Updated" date at the top of the page.</p>
+                                        </div>
+
+                                        <!-- 15. Contact Us & Grievance Officer -->
+                                        <div class="mb-4">
+                                            <h3 class="h5 fw-bold text-dark">15. Contact Us &amp; Grievance Officer</h3>
+                                            <p>For any questions, privacy requests, or grievances regarding your personal data, please contact:</p>
+                                            <ul class="list-unstyled bg-light p-3 rounded border">
+                                                <li><strong>Application Name:</strong> LB Fresh</li>
+                                                <li><strong>Operated By:</strong> LB Mart</li>
+                                                <li><strong>Official Website:</strong> <a href="https://lbfreshbasket.com/">https://lbfreshbasket.com/</a></li>
+                                                <li><strong>Privacy &amp; Support Email:</strong> <a href="mailto:lbfreshbasket@gmail.com">lbfreshbasket@gmail.com</a></li>
+                                                <li><strong>Phone:</strong> <a href="tel:+917603918199">+91 7603918199</a></li>
+                                                <li><strong>Business Address:</strong> Therpet Road, Near Government Hospital, Denkanikottai, Tamil Nadu – 635107, India</li>
+                                            </ul>
+                                        </div>
+
+                                        <!-- 16. Consent -->
+                                        <div class="mb-4">
+                                            <h3 class="h5 fw-bold text-dark">16. Consent</h3>
+                                            <p>By registering on or using the LB Fresh website or Android mobile application, you signify your acceptance of this Privacy Policy. If you do not agree with the terms described above, please discontinue using our application and services.</p>
+                                        </div>
+
+                                        <!-- Footer -->
+                                        <div class="border-top pt-4 mt-4 text-center text-muted small">
+                                            <p class="mb-1"><strong>LB Fresh</strong> | Official Website: <a href="https://lbfreshbasket.com/">https://lbfreshbasket.com/</a></p>
+                                            <p class="mb-0">© 2026 LB Fresh / LB Mart. All Rights Reserved.</p>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </t>
+    </template>
+</odoo>

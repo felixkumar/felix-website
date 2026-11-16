@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="lb_fresh_delete_account_template" name="LB Fresh Account Deletion">
+        <t t-call="website.layout">
+            <t t-set="title">Delete Account – LB Fresh</t>
+            <div id="wrap" class="oe_structure">
+                <section class="py-5 bg-light">
+                    <div class="container">
+                        <div class="row justify-content-center">
+                            <div class="col-lg-10 col-xl-8">
+                                <div class="card shadow-sm border-0 rounded-3">
+                                    <div class="card-body p-4 p-md-5">
+
+                                        <!-- Header -->
+                                        <div class="border-bottom pb-4 mb-4">
+                                            <span class="badge bg-danger-subtle text-danger mb-2">Account &amp; Data Management</span>
+                                            <h1 class="fw-bold text-dark mb-2">Delete Your LB Fresh Account</h1>
+                                            <p class="text-muted mb-0">
+                                                <strong>Application:</strong> LB Fresh (Android &amp; Web) | <strong>Operated By:</strong> LB Mart
+                                            </p>
+                                        </div>
+
+                                        <!-- Success Alert when form is submitted -->
+                                        <t t-if="submitted">
+                                            <div class="alert alert-success border-0 shadow-sm mb-4" role="alert">
+                                                <h4 class="alert-heading h6 fw-bold mb-1">Deletion Request Received</h4>
+                                                <p class="mb-0 small">
+                                                    Thank you. We have logged your account deletion request for <strong><t t-esc="submitted_contact"/></strong>. Our privacy team will verify your identity and permanently delete your LB Fresh account and associated personal data within <strong>30 days</strong>.
+                                                </p>
+                                            </div>
+                                        </t>
+
+                                        <!-- Intro -->
+                                        <div class="mb-4">
+                                            <p>At <strong>LB Fresh</strong>, you have full control over your personal data. You can permanently delete your LB Fresh customer account and associated personal information at any time using either of the methods below.</p>
+                                        </div>
+
+                                        <!-- Method 1: In-App Deletion -->
+                                        <div class="mb-4 p-3 bg-light rounded border">
+                                            <h2 class="h5 fw-bold text-dark mb-3">Method 1: Delete Directly Inside the LB Fresh App</h2>
+                                            <p class="small text-muted mb-2">If you still have the LB Fresh Android app installed on your phone:</p>
+                                            <ol class="mb-0">
+                                                <li>Open the <strong>LB Fresh</strong> mobile application and log in with your registered mobile number or email.</li>
+                                                <li>Tap on <strong>Account / Profile</strong> in the bottom navigation menu.</li>
+                                                <li>Go to <strong>Settings → Delete Account</strong>.</li>
+                                                <li>Review the confirmation notice and tap <strong>Confirm Permanent Deletion</strong>.</li>
+                                            </ol>
+                                        </div>
+
+                                        <!-- Method 2: Web Form or Email -->
+                                        <div class="mb-4">
+                                            <h2 class="h5 fw-bold text-dark mb-3">Method 2: Submit a Web Deletion Request</h2>
+                                            <p class="small text-muted">If you have uninstalled the app or cannot access your account, submit the form below or email us directly at <a href="mailto:lbfreshbasket@gmail.com"><strong>lbfreshbasket@gmail.com</strong></a> with the subject <em>"Account Deletion Request – LB Fresh"</em>.</p>
+
+                                            <form action="/delete-account/submit" method="post" class="p-4 border rounded bg-white">
+                                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+
+                                                <div class="mb-3">
+                                                    <label for="full_name" class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
+                                                    <input type="text" class="form-control" id="full_name" name="full_name" placeholder="Enter your registered name" required="required"/>
+                                                </div>
+
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <label for="phone" class="form-label fw-semibold">Registered Mobile Number <span class="text-danger">*</span></label>
+                                                        <input type="tel" class="form-control" id="phone" name="phone" placeholder="+91 XXXXX XXXXX" required="required"/>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label for="email" class="form-label fw-semibold">Registered Email Address (Optional)</label>
+                                                        <input type="email" class="form-control" id="email" name="email" placeholder="you@example.com"/>
+                                                    </div>
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label for="reason" class="form-label fw-semibold">Reason for Deletion (Optional)</label>
+                                                    <textarea class="form-control" id="reason" name="reason" rows="2" placeholder="Optional feedback..."></textarea>
+                                                </div>
+
+                                                <div class="form-check mb-3">
+                                                    <input class="form-check-input" type="checkbox" id="confirm_delete" required="required"/>
+                                                    <label class="form-check-label small" for="confirm_delete">
+                                                        I understand that deleting my LB Fresh account is permanent and will erase my saved addresses, profile details, and account access.
+                                                    </label>
+                                                </div>
+
+                                                <button type="submit" class="btn btn-danger px-4 fw-semibold">Submit Account Deletion Request</button>
+                                            </form>
+                                        </div>
+
+                                        <!-- Data Deletion & Retention Disclosure (Required by Google Play) -->
+                                        <div class="mb-4">
+                                            <h2 class="h5 fw-bold text-dark mb-3">What Happens When You Delete Your Account?</h2>
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <div class="p-3 border rounded h-100 bg-white">
+                                                        <h3 class="h6 fw-bold text-success mb-2">Data Permanently Deleted</h3>
+                                                        <ul class="small mb-0 ps-3">
+                                                            <li>Customer profile (name, phone number, email)</li>
+                                                            <li>Saved delivery addresses and location pins</li>
+                                                            <li>Login credentials, session tokens, and FCM push tokens</li>
+                                                            <li>Saved cart items and app preferences</li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="p-3 border rounded h-100 bg-white">
+                                                        <h3 class="h6 fw-bold text-warning-emphasis mb-2">Data Retained for Legal Compliance</h3>
+                                                        <ul class="small mb-0 ps-3">
+                                                            <li>Completed tax invoices and GST billing records</li>
+                                                            <li>Payment settlement and refund reference IDs</li>
+                                                            <li>Fraud-prevention and statutory audit logs required under Indian law</li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <p class="small text-muted mt-3 mb-0">
+                                                <strong>Processing Timeline:</strong> All deletion requests are verified and completed within <strong>30 days</strong>. Retained financial records are stored in restricted access solely for statutory tax compliance and are never used for marketing.
+                                            </p>
+                                        </div>
+
+                                        <!-- Contact & Links -->
+                                        <div class="border-top pt-4 mt-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center small text-muted">
+                                            <div>
+                                                Need help? Email <a href="mailto:lbfreshbasket@gmail.com">lbfreshbasket@gmail.com</a> or call <a href="tel:+917603918199">+91 7603918199</a>.
+                                            </div>
+                                            <div class="mt-2 mt-md-0">
+                                                <a href="https://lbfreshbasket.com/app-privacy-policy">Read Full Privacy Policy</a>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </t>
+    </template>
+</odoo>

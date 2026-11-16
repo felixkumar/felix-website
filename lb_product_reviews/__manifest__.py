@@ -11,6 +11,8 @@
         'security/ir.model.access.csv',
         'views/product_review_views.xml',
         'views/website_templates.xml',
+        'views/privacy_policy_templates.xml',
+        'views/lb_fresh_delete_account_template.xml',
     ],
     'assets': {
         'web.assets_frontend': [

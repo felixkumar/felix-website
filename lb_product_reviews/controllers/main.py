@@ -21,10 +21,52 @@ import logging
 from odoo import http, fields
 from odoo.http import request
 import json
+from odoo import http
+from odoo.http import request
+from markupsafe import escape
 
 _logger = logging.getLogger(__name__)
 
 class SaleOrderAPIController(http.Controller):
+
+    @http.route('/app-privacy-policy', type='http', auth='public', website=True, sitemap=True)
+    def app_privacy_policy(self, **kwargs):
+        return request.render('lb_product_reviews.lb_fresh_privacy_policy_template')
+
+    @http.route('/delete-account', type='http', auth='public', website=True, sitemap=True)
+    def delete_account_page(self, **kwargs):
+        return request.render('lb_product_reviews.lb_fresh_delete_account_template', {
+            'submitted': False,
+        })
+
+    @http.route('/delete-account/submit', type='http', auth='public', methods=['POST'], website=True, csrf=True)
+    def delete_account_submit(self, **post):
+        full_name = (post.get('full_name') or '').strip()
+        phone = (post.get('phone') or '').strip()
+        email = (post.get('email') or '').strip()
+        reason = (post.get('reason') or '').strip()
+
+        body_html = f"""
+                <p><strong>New Account Deletion Request – LB Fresh</strong></p>
+                <ul>
+                    <li><strong>Name:</strong> {escape(full_name)}</li>
+                    <li><strong>Registered Phone:</strong> {escape(phone)}</li>
+                    <li><strong>Registered Email:</strong> {escape(email or 'Not provided')}</li>
+                    <li><strong>Reason:</strong> {escape(reason or 'Not provided')}</li>
+                </ul>
+                <p>Please verify the customer account in Odoo and complete deletion within 30 days.</p>
+            """
+        mail_values = {
+            'subject': f'Account Deletion Request – LB Fresh ({phone})',
+            'email_to': 'lbfreshbasket@gmail.com',
+            'body_html': body_html,
+        }
+        request.env['mail.mail'].sudo().create(mail_values).send()
+
+        return request.render('lb_product_reviews.lb_fresh_delete_account_template', {
+            'submitted': True,
+            'submitted_contact': phone or email,
+        })
 
     @http.route('/api/delivery/address/select_and_verify', type='json', auth='public', methods=['POST'], csrf=False)
     def select_and_verify_address(self, order_id=None, address_id=None, **kw):
